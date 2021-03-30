@@ -1,4 +1,4 @@
-# SNAC: Simultaneous Navigation and Construction Benchmarking Environments
+#Simultaneous Navigation and Construction Benchmarking Environments
 
 [**Wenyu Han**](https://github.com/WenyuHan-LiNa), [**Chen Feng**](https://engineering.nyu.edu/faculty/chen-feng), [**Haoran Wu**](), [**Alexander Gao**](https://www.alexandergao.com/), [**Armand Jordana**](https://wp.nyu.edu/machinesinmotion/people/), [**Dong Liu**](http://mechatronics.engineering.nyu.edu/people/phd-candidates/dongdong-liu.php), [**Lerrel Pinto**](https://www.lerrelpinto.com/), [**Ludovic Righetti**](https://wp.nyu.edu/machinesinmotion/89-2/)
 
@@ -40,8 +40,11 @@ To cite our paper:
 **Comparison between other robotic learning tasks with ours.**
 |   | Loc |Plan|Env-Mod|Env-Eval|
 | ------------- | ------------- |------------- |------------- |------------- |
-| Robot Manipulation  | \checkmark  |
-| Robot Locomotion  | \xmark  |
+| Robot Manipulation |:x:| :heavy_check_mark:  |:heavy_check_mark: |:x:|
+| Robot Locomotion  | :x: |:x: |:x: |:x: |
+|Visual Navigation|:heavy_check_mark:  |:heavy_check_mark: |:x:|:x:|
+|Atari|:x:|:heavy_check_mark: / :x:|:heavy_check_mark: |:x:|
+
 
 ## Results
 **Benchmark results for all baselines, including human baseline: average IoU(left) and minimum IoU(right). Human data of 3D environment is not collected, because it is time-consuming for human to play one game.**
@@ -51,4 +54,4 @@ To cite our paper:
 ![Baseline_visualize](https://github.com/ai4ce/SNAC/blob/main/docs/figs/results_fig.PNG)
 
 ## Acknowledgment
-The authors gratefully acknowledge the helpful comments and suggestions from [**Bolei Zhou**](http://bzhou.ie.cuhk.edu.hk/) and and the anonymous reviewers. The authors gratefully thank human test participants for human data collection. The author also thank [**Congcong Wen**](https://scholar.google.com/citations?hl=en&user=OTBgvCYAAAAJ) for paper revision.  
+ The research is supported by NSF CPS program under CMMI-1932187. The authors gratefully thank our human test participants and the helpful comments from [**Bolei Zhou**](http://bzhou.ie.cuhk.edu.hk/), [**Zhen Liu**](http://itszhen.com/), and the anonymous reviewers, and also [**Congcong Wen**](https://scholar.google.com/citations?hl=en&user=OTBgvCYAAAAJ) for paper revision.
