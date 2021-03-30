@@ -36,6 +36,13 @@ To cite our paper:
 ### Task environment setups  
 ![env](https://github.com/ai4ce/SNAC/blob/main/docs/figs/environment.PNG)
 
+## Comparison 
+**Comparison between other robotic learning tasks with ours.**
+|   | Loc |Plan|Env-Mod|Env-Eval|
+| ------------- | ------------- |------------- |------------- |------------- |
+| Robot Manipulation  | \checkmark  |
+| Robot Locomotion  | \xmark  |
+
 ## Results
 **Benchmark results for all baselines, including human baseline: average IoU(left) and minimum IoU(right). Human data of 3D environment is not collected, because it is time-consuming for human to play one game.**
 ![Baseline_curve](https://github.com/ai4ce/SNAC/blob/main/docs/figs/result_curve.PNG)
@@ -44,4 +51,4 @@ To cite our paper:
 ![Baseline_visualize](https://github.com/ai4ce/SNAC/blob/main/docs/figs/results_fig.PNG)
 
 ## Acknowledgment
-The authors gratefully acknowledge the helpful comments and suggestions from [**Bolei Zhou**](http://bzhou.ie.cuhk.edu.hk/) 
+The authors gratefully acknowledge the helpful comments and suggestions from [**Bolei Zhou**](http://bzhou.ie.cuhk.edu.hk/) and and the anonymous reviewers. The authors gratefully thank human test participants for human data collection. The author also thank [**Congcong Wen**](https://scholar.google.com/citations?hl=en&user=OTBgvCYAAAAJ) for paper revision.  
