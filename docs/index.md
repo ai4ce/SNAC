@@ -1,8 +1,6 @@
-#Simultaneous Navigation and Construction Benchmarking Environments
+# Simultaneous Navigation and Construction Benchmarking Environments
 
 [**Wenyu Han**](https://github.com/WenyuHan-LiNa), [**Chen Feng**](https://engineering.nyu.edu/faculty/chen-feng), [**Haoran Wu**](), [**Alexander Gao**](https://www.alexandergao.com/), [**Armand Jordana**](https://wp.nyu.edu/machinesinmotion/people/), [**Dong Liu**](http://mechatronics.engineering.nyu.edu/people/phd-candidates/dongdong-liu.php), [**Lerrel Pinto**](https://www.lerrelpinto.com/), [**Ludovic Righetti**](https://wp.nyu.edu/machinesinmotion/89-2/)
-
-IEEE Robotics and Automation Letters with IROS 2021 (under review)
 
 ![Overview](https://github.com/ai4ce/SNAC/blob/main/docs/figs/overview.PNG)
 
@@ -27,8 +25,7 @@ This code provides an implementation of the method described in the
 following publication: 
 
 Wenyu Han, Chen Feng, Haoran Wu, Alexander Gao, Armand Jordana, Dong Liu, Lerrel Pinto, and Ludovic Righetti,    
-"SNAC: Simultaneous Navigation and Construction Benchmarking Environments," 
-IEEE Robotics and Automation Letters (RAL) with IROS 2021 (under review).
+"Simultaneous Navigation and Construction Benchmarking Environments". 
 ``` 
 ## [Paper (arXiv)]
 To cite our paper:
@@ -44,7 +41,11 @@ To cite our paper:
 | Robot Locomotion  | :x: |:x: |:x: |:x: |
 |Visual Navigation|:heavy_check_mark:  |:heavy_check_mark: |:x:|:x:|
 |Atari|:x:|:heavy_check_mark: / :x:|:heavy_check_mark: |:x:|
-
+|Minecraft|:x:|:heavy_check_mark: / :x:|:heavy_check_mark: |:x:|
+|First-Person-Shooting|:heavy_check_mark:|:x:|:x:|:x:|
+|Real-Time Strategy Games|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:x:|
+|Physical Reasoning|:x:|:heavy_check_mark:|:heavy_check_mark:|:x:|
+|Mobile Construction (Ours)|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
 
 ## Results
 **Benchmark results for all baselines, including human baseline: average IoU(left) and minimum IoU(right). Human data of 3D environment is not collected, because it is time-consuming for human to play one game.**
