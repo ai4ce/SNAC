@@ -1,37 +1,47 @@
-## Welcome to GitHub Pages
+# SNAC: Simultaneous Navigation and Construction Benchmarking Environments
 
-You can use the [editor on GitHub](https://github.com/ai4ce/SNAC/edit/main/docs/index.md) to maintain and preview the content for your website in Markdown files.
+[**Wenyu Han**](https://github.com/WenyuHan-LiNa), [**Chen Feng**](https://engineering.nyu.edu/faculty/chen-feng), [**Haoran Wu**](), [**Alexander Gao**](https://www.alexandergao.com/), [**Armand Jordana**](https://wp.nyu.edu/machinesinmotion/people/), [**Dong Liu**](http://mechatronics.engineering.nyu.edu/people/phd-candidates/dongdong-liu.php), [**Lerrel Pinto**](https://www.lerrelpinto.com/), [**Ludovic Righetti**](https://wp.nyu.edu/machinesinmotion/89-2/)
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+IEEE Robotics and Automation Letters with IROS 2021 (under review)
 
-### Markdown
+![Overview](https://github.com/ai4ce/SNAC/blob/main/docs/figs/overview.PNG)
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+|[Abstract](#abstract)|[Code](#code-github)|[Paper](#paper-arxiv)|[Results](#results)|[Acknowledgment](#acknowledgment)|
 
-```markdown
-Syntax highlighted code block
+## Abstract
+We need intelligent robots for mobile construc-tion, the process of navigating in an environment and modifyingits structure according to a geometric design. In this task, a major robot vision and learning challenge is how to exactlyachieve the design without GPS, due to the difficulty caused bythe bi-directional coupling of accurate robot localization and navigation together with strategic environment manipulation. However, many existing robot vision and learning tasks such as visual navigation and robot manipulation address only one of these two coupled aspects. To stimulate the pursuit of a generic and adaptive solution, we reasonably simplify mobile construction as a partially observable Markov decision process (POMDP) in 1/2/3D grid worlds and benchmark the performance of a handcrafted policy with basic localization and planning, and state-of-the-art deep reinforcement learning (RL) methods. Our extensive experiments show that the coupling makes this problem very challenging for those methods, and emphasize the need for novel task-specific solutions.
 
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+## [Code (GitHub)](https://github.com/ai4ce/SNAC/tree/main/script)
 ```
+The code is copyrighted by the authors. Permission to copy and use 
+ this software for noncommercial use is hereby granted provided: (a)
+ this notice is retained in all copies, (2) the publication describing
+ the method (indicated below) is clearly cited, and (3) the
+ distribution from which the code was obtained is clearly cited. For
+ all other uses, please contact the authors.
+ 
+ The software code is provided "as is" with ABSOLUTELY NO WARRANTY
+ expressed or implied. Use at your own risk.
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+This code provides an implementation of the method described in the
+following publication: 
 
-### Jekyll Themes
+Wenyu Han, Chen Feng, Haoran Wu, Alexander Gao, Armand Jordana, Dong Liu, Lerrel Pinto, and Ludovic Righetti,    
+"SNAC: Simultaneous Navigation and Construction Benchmarking Environments," 
+IEEE Robotics and Automation Letters (RAL) with IROS 2021 (under review).
+``` 
+## [Paper (arXiv)]
+To cite our paper:
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/ai4ce/SNAC/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+### Task environment setups  
+![env](https://github.com/ai4ce/SNAC/blob/main/docs/figs/environment.PNG)
 
-### Support or Contact
+## Results
+**Benchmark results for all baselines, including human baseline: average IoU(left) and minimum IoU(right). Human data of 3D environment is not collected, because it is time-consuming for human to play one game.**
+![Baseline_curve](https://github.com/ai4ce/SNAC/blob/main/docs/figs/result_curve.PNG)
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+**The best testing visualized results of baselines on all tasks.**
+![Baseline_visualize](https://github.com/ai4ce/SNAC/blob/main/docs/figs/results_fig.PNG)
+
+## Acknowledgment
+The authors gratefully acknowledge the helpful comments and suggestions from [**Bolei Zhou**](http://bzhou.ie.cuhk.edu.hk/) 
