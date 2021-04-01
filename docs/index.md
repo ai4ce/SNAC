@@ -31,7 +31,7 @@ Wenyu Han, Chen Feng, Haoran Wu, Alexander Gao, Armand Jordana, Dong Liu, Lerrel
 To cite our paper:
 
 ### Task environment setups  
-![env](https://github.com/ai4ce/SNAC/blob/main/docs/figs/environment.PNG)
+![env](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/environment.PNG?token=ANKETMRIKIWQNDQVUC5Q5FDAN4VQ6)
 
 ## Comparison 
 **Comparison between other robotic learning tasks with ours.**
