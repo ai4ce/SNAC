@@ -45,7 +45,7 @@ To cite our paper:
 
 ## Comparison 
 **Comparison between other robotic learning tasks with ours.**
-![table](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/comparison_table.PNG?token=ANKETMVRDGCQ6MKT4TIWGELAN4YDA)
+![table](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/comparison_table.PNG?token=ANKETMXBFQCPNT5CBK5GVKDAN4YP4)
 
 ## Results
 **Benchmark results for all baselines, including human baseline: average IoU(left) and minimum IoU(right). Human data of 3D environment is not collected, because it is time-consuming for human to play one game.**
