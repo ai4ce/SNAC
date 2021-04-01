@@ -45,6 +45,7 @@ To cite our paper:
 
 ## Comparison 
 **Comparison between other robotic learning tasks with ours.**
+
 |   | Loc |Plan|Env-Mod|Env-Eval|
 | ------------- | ------------- |------------- |------------- |------------- |
 | Robot Manipulation |:x:| :heavy_check_mark:  |:heavy_check_mark: |:x:|
