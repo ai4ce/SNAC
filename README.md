@@ -8,8 +8,18 @@ We need intelligent robots for mobile construction, the process of navigating in
 ## [Code (GitHub)](https://github.com/ai4ce/SNAC) & Dependencies
 All environment scripts can be found in [Env](https://github.com/ai4ce/SNAC/tree/main/Env) folder. These environments are developed based on the [OpenAi Gym](https://gym.openai.com/). All baseline scripts are in [script](https://github.com/ai4ce/SNAC/tree/main/script) floder. You need to install the [Pytorch](https://pytorch.org/) to run all baseline scripts. We use [Stable baseline](https://github.com/openai/baselines/) for PPO algorithm. 
 
-## [Paper (arXiv)]
+## [Paper (arXiv)](https://arxiv.org/abs/2103.16732)
 To cite our paper:
+```
+@misc{han2021simultaneous,
+      title={Simultaneous Navigation and Construction Benchmarking Environments}, 
+      author={Wenyu Han and Chen Feng and Haoran Wu and Alexander Gao and Armand Jordana and Dong Liu and Lerrel Pinto and Ludovic Righetti},
+      year={2021},
+      eprint={2103.16732},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO}
+}
+```
 
 ## Acknowledgment
  The research is supported by NSF CPS program under CMMI-1932187. The authors gratefully thank our human test participants and the helpful comments from [**Bolei Zhou**](http://bzhou.ie.cuhk.edu.hk/), [**Zhen Liu**](http://itszhen.com/), and the anonymous reviewers, and also [**Congcong Wen**](https://scholar.google.com/citations?hl=en&user=OTBgvCYAAAAJ) for paper revision.
