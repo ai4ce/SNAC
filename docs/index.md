@@ -27,14 +27,24 @@ following publication:
 Wenyu Han, Chen Feng, Haoran Wu, Alexander Gao, Armand Jordana, Dong Liu, Lerrel Pinto, and Ludovic Righetti,    
 "Simultaneous Navigation and Construction Benchmarking Environments (arXiv)". 
 ``` 
-## [Paper (arXiv)]
+## [Paper (arXiv)](https://arxiv.org/abs/2103.16732)
 To cite our paper:
+```
+@misc{han2021simultaneous,
+      title={Simultaneous Navigation and Construction Benchmarking Environments}, 
+      author={Wenyu Han and Chen Feng and Haoran Wu and Alexander Gao and Armand Jordana and Dong Liu and Lerrel Pinto and Ludovic Righetti},
+      year={2021},
+      eprint={2103.16732},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO}
+}
+```
 
 ### Task environment setups  
 ![env](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/environment.PNG?token=ANKETMWZOL7HPJVJHNDX2B3AN4WDE)
 
 ## Comparison 
-**Comparison between other robotic learning tasks with ours.**
+**Comparison between other robotic learning tasks with ours.
 |   | Loc |Plan|Env-Mod|Env-Eval|
 | ------------- | ------------- |------------- |------------- |------------- |
 | Robot Manipulation |:x:| :heavy_check_mark:  |:heavy_check_mark: |:x:|
@@ -46,7 +56,7 @@ To cite our paper:
 |Real-Time Strategy Games|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:x:|
 |Physical Reasoning|:x:|:heavy_check_mark:|:heavy_check_mark:|:x:|
 |Mobile Construction (Ours)|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
-
+**
 ## Results
 **Benchmark results for all baselines, including human baseline: average IoU(left) and minimum IoU(right). Human data of 3D environment is not collected, because it is time-consuming for human to play one game.**
 ![Baseline_curve](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/result_curve.PNG?token=ANKETMSFKVHG2SIV2JIVMLTAN4WEW)
