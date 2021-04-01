@@ -2,7 +2,7 @@
 
 [**Wenyu Han**](https://github.com/WenyuHan-LiNa), [**Chen Feng**](https://engineering.nyu.edu/faculty/chen-feng), [**Haoran Wu**](https://www.linkedin.com/in/haoran-lucas-ng-4053471a0/), [**Alexander Gao**](https://www.alexandergao.com/), [**Armand Jordana**](https://wp.nyu.edu/machinesinmotion/people/), [**Dong Liu**](http://mechatronics.engineering.nyu.edu/people/phd-candidates/dongdong-liu.php), [**Lerrel Pinto**](https://www.lerrelpinto.com/), [**Ludovic Righetti**](https://wp.nyu.edu/machinesinmotion/89-2/)
 
-![Overview](https://github.com/ai4ce/SNAC/blob/main/docs/figs/overview.PNG)
+![Overview](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/overview.PNG?token=ANKETMQES4EKYCQYAE4K4WLAN4WB4)
 
 |[Abstract](#abstract)|[Code](#code-github)|[Paper](#paper-arxiv)|[Results](#results)|[Acknowledgment](#acknowledgment)|
 
@@ -31,7 +31,7 @@ Wenyu Han, Chen Feng, Haoran Wu, Alexander Gao, Armand Jordana, Dong Liu, Lerrel
 To cite our paper:
 
 ### Task environment setups  
-![env](https://github.com/ai4ce/SNAC/raw/main/docs/figs/environment.PNG)
+![env](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/environment.PNG?token=ANKETMWZOL7HPJVJHNDX2B3AN4WDE)
 
 ## Comparison 
 **Comparison between other robotic learning tasks with ours.**
@@ -49,10 +49,10 @@ To cite our paper:
 
 ## Results
 **Benchmark results for all baselines, including human baseline: average IoU(left) and minimum IoU(right). Human data of 3D environment is not collected, because it is time-consuming for human to play one game.**
-![Baseline_curve](https://github.com/ai4ce/SNAC/raw/main/docs/figs/result_curve.PNG)
+![Baseline_curve](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/result_curve.PNG?token=ANKETMSFKVHG2SIV2JIVMLTAN4WEW)
 
 **The best testing visualized results of baselines on all tasks.**
-![Baseline_visualize](https://github.com/ai4ce/SNAC/raw/main/docs/figs/results_fig.PNG)
+![Baseline_visualize](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/results_fig.PNG?token=ANKETMRREVGARACAVL44QJLAN4WFW)
 
 ## Acknowledgment
  The research is supported by NSF CPS program under CMMI-1932187. The authors gratefully thank our human test participants and the helpful comments from [**Bolei Zhou**](http://bzhou.ie.cuhk.edu.hk/), [**Zhen Liu**](http://itszhen.com/), and the anonymous reviewers, and also [**Congcong Wen**](https://scholar.google.com/citations?hl=en&user=OTBgvCYAAAAJ) for paper revision.
