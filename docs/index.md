@@ -44,7 +44,7 @@ To cite our paper:
 ![env](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/environment.PNG?token=ANKETMWZOL7HPJVJHNDX2B3AN4WDE)
 
 ## Comparison 
-**Comparison between other robotic learning tasks with ours.
+**Comparison between other robotic learning tasks with ours.**
 |   | Loc |Plan|Env-Mod|Env-Eval|
 | ------------- | ------------- |------------- |------------- |------------- |
 | Robot Manipulation |:x:| :heavy_check_mark:  |:heavy_check_mark: |:x:|
@@ -56,7 +56,7 @@ To cite our paper:
 |Real-Time Strategy Games|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:x:|
 |Physical Reasoning|:x:|:heavy_check_mark:|:heavy_check_mark:|:x:|
 |Mobile Construction (Ours)|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
-**
+
 ## Results
 **Benchmark results for all baselines, including human baseline: average IoU(left) and minimum IoU(right). Human data of 3D environment is not collected, because it is time-consuming for human to play one game.**
 ![Baseline_curve](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/result_curve.PNG?token=ANKETMSFKVHG2SIV2JIVMLTAN4WEW)
