@@ -31,7 +31,7 @@ Wenyu Han, Chen Feng, Haoran Wu, Alexander Gao, Armand Jordana, Dong Liu, Lerrel
 To cite our paper:
 
 ### Task environment setups  
-![env](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/environment.PNG?token=ANKETMRIKIWQNDQVUC5Q5FDAN4VQ6)
+![env](https://github.com/ai4ce/SNAC/raw/main/docs/figs/environment.PNG)
 
 ## Comparison 
 **Comparison between other robotic learning tasks with ours.**
@@ -49,10 +49,10 @@ To cite our paper:
 
 ## Results
 **Benchmark results for all baselines, including human baseline: average IoU(left) and minimum IoU(right). Human data of 3D environment is not collected, because it is time-consuming for human to play one game.**
-![Baseline_curve](https://github.com/ai4ce/SNAC/blob/main/docs/figs/result_curve.PNG)
+![Baseline_curve](https://github.com/ai4ce/SNAC/raw/main/docs/figs/result_curve.PNG)
 
 **The best testing visualized results of baselines on all tasks.**
-![Baseline_visualize](https://github.com/ai4ce/SNAC/blob/main/docs/figs/results_fig.PNG)
+![Baseline_visualize](https://github.com/ai4ce/SNAC/raw/main/docs/figs/results_fig.PNG)
 
 ## Acknowledgment
  The research is supported by NSF CPS program under CMMI-1932187. The authors gratefully thank our human test participants and the helpful comments from [**Bolei Zhou**](http://bzhou.ie.cuhk.edu.hk/), [**Zhen Liu**](http://itszhen.com/), and the anonymous reviewers, and also [**Congcong Wen**](https://scholar.google.com/citations?hl=en&user=OTBgvCYAAAAJ) for paper revision.
