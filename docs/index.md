@@ -45,18 +45,7 @@ To cite our paper:
 
 ## Comparison 
 **Comparison between other robotic learning tasks with ours.**
-
-|   | Loc |Plan|Env-Mod|Env-Eval|
-| ------------- | ------------- |------------- |------------- |------------- |
-| Robot Manipulation |:x:| :heavy_check_mark:  |:heavy_check_mark: |:x:|
-| Robot Locomotion  | :x: |:x: |:x: |:x: |
-|Visual Navigation|:heavy_check_mark:  |:heavy_check_mark: |:x:|:x:|
-|Atari|:x:|:heavy_check_mark: / :x:|:heavy_check_mark: |:x:|
-|Minecraft|:x:|:heavy_check_mark: / :x:|:heavy_check_mark: |:x:|
-|First-Person-Shooting|:heavy_check_mark:|:x:|:x:|:x:|
-|Real-Time Strategy Games|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:x:|
-|Physical Reasoning|:x:|:heavy_check_mark:|:heavy_check_mark:|:x:|
-|Mobile Construction (Ours)|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
+![table](https://raw.githubusercontent.com/ai4ce/SNAC/main/docs/figs/comparison_table.PNG?token=ANKETMVRDGCQ6MKT4TIWGELAN4YDA)
 
 ## Results
 **Benchmark results for all baselines, including human baseline: average IoU(left) and minimum IoU(right). Human data of 3D environment is not collected, because it is time-consuming for human to play one game.**
