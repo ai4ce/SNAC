@@ -9,7 +9,7 @@
 ## Abstract
 We need intelligent robots for mobile construction, the process of navigating in an environment and modifyingits structure according to a geometric design. In this task, a major robot vision and learning challenge is how to exactly achieve the design without GPS, due to the difficulty caused bythe bi-directional coupling of accurate robot localization and navigation together with strategic environment manipulation. However, many existing robot vision and learning tasks such as visual navigation and robot manipulation address only one of these two coupled aspects. To stimulate the pursuit of a generic and adaptive solution, we reasonably simplify mobile construction as a partially observable Markov decision process (POMDP) in 1/2/3D grid worlds and benchmark the performance of a handcrafted policy with basic localization and planning, and state-of-the-art deep reinforcement learning (RL) methods. Our extensive experiments show that the coupling makes this problem very challenging for those methods, and emphasize the need for novel task-specific solutions.
 
-## [Code (GitHub)](https://github.com/ai4ce/SNAC/tree/main/script)
+## [Code (GitHub)](https://github.com/ai4ce/SNAC/tree/main/)
 ```
 The code is copyrighted by the authors. Permission to copy and use 
  this software for noncommercial use is hereby granted provided: (a)
