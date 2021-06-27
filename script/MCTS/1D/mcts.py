@@ -47,7 +47,9 @@ def mcts_procedure(ag, tree_policy, env, done):
     and returning the one chosen by the tree policy.
     """
     root = DecisionNode(None, env.state, ag.action_space.copy(), done)
-    print(env.state)
+# =============================================================================
+#     print(env.state)
+# =============================================================================
     for _ in range(ag.rollouts):
         rewards = [] # Rewards collected along the tree for the current rollout
         node = root # Current node
