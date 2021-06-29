@@ -14,11 +14,12 @@ save_path = "./log/"
 if os.path.exists(save_path) == False:
     os.makedirs(save_path)
 ### Parameters
-env = deep_mobile_printing_1d1r_MCTS(plan_choose=2)
+env = deep_mobile_printing_1d1r_MCTS(plan_choose=0)
 agent = uct.UCT(
     action_space=env.action_space,
-    rollouts=10,
-    horizon=2,
+    rollouts=2,
+    horizon=0,
+    ucb_constant=0.5,
     is_model_dynamic=True
 )
 

@@ -9,7 +9,7 @@ env.equality_operator(s1, s2)
 """
 
 import itertools
-import mcts
+import mcts_Qvalue
 # =============================================================================
 # import dyna_gym.utils.utils as utils
 # =============================================================================
@@ -25,7 +25,7 @@ class UCT(object):
     """
     def __init__(self, action_space, rollouts=100, horizon=100, gamma=0.9, ucb_constant=6.36396103068, is_model_dynamic=True):
         if type(action_space) == spaces.discrete.Discrete:
-            self.action_space = list(mcts.combinations(action_space))
+            self.action_space = list(mcts_Qvalue.combinations(action_space))
         else:
             self.action_space = action_space
         self.n_actions = len(self.action_space)
@@ -64,7 +64,7 @@ class UCT(object):
         """
         Upper Confidence Bound of a chance node
         """
-        return mcts.chance_node_value(node) + self.ucb_constant * sqrt(log(node.parent.visits)/len(node.sampled_returns))
+        return mcts_Qvalue.chance_node_value(node) + self.ucb_constant * sqrt(log(node.parent.visits)/len(node.sampled_returns))
 
-    def act(self, env, done):
-        return mcts.mcts_procedure(self, uct_tree_policy, env, done)
+    def act(self, env,Q_Net,state, obs, done):
+        return mcts_Qvalue.mcts_procedure(self, uct_tree_policy,Q_Net,state, obs,env, done)
