@@ -16,11 +16,11 @@ from collections import deque
 import random
 import sys
 sys.path.append('../../../Env/1D/')
-from DMP_Env_1D_static_MCTS import deep_mobile_printing_1d1r_MCTS_obs
+from DMP_Env_1D_static_MCTS_obs import deep_mobile_printing_1d1r_MCTS_obs
 import uct
 
 
-log_path="./final_test/"
+log_path="./log/DQN_1d_Step_lr0.01_rollouts50_ucb_constant0.5/"
 
 env = deep_mobile_printing_1d1r_MCTS_obs(plan_choose=2)
 
@@ -29,9 +29,9 @@ if os.path.exists(log_path)==False:
 
 ## hyper parameter
 minibatch_size=2000
-Lr=0.001
+Lr=0.01
 N_iteration=3000
-N_iteration_test=10
+N_iteration_test=3
 alpha=0.9
 Replay_memory_size=50000
 Update_traget_period=200
@@ -74,9 +74,9 @@ class Q_NET(nn.Module):
 
 UCT_mcts = uct.UCT(
     action_space=env.action_space,
-    rollouts=100,
+    rollouts=50,
     horizon=100,
-    ucb_constant=6.36396103068,
+    ucb_constant=0.5,
     is_model_dynamic=True
 )
 
@@ -84,6 +84,7 @@ class DQN_AGNET():
     def __init__(self,device):
         self.Eval_net= Q_NET().to(device)
         self.Target_net = Q_NET().to(device)
+        self.device=device
         self.learn_step = 0                                     # counting the number of learning for update traget periodiclly 
         self.count_memory = 0                                         # counting the transitions 
         # self.replay_memory = np.zeros((Replay_memory_size, State_dim * 2 + 2)) 
@@ -97,12 +98,9 @@ class DQN_AGNET():
         # index=self.count_memory%Replay_memory_size
         self.replay_memory.append((s,a,r,s_next))
         self.count_memory+=1
-    def choose_action(self,env,s,o,done):
+    def choose_action(self,env,state,obs,done):
         
-        state=torch.FloatTensor(s).to(device)
-        obs=torch.FloatTensor(o).to(device)
-       
-        action=UCT_mcts.act(env,self.Eval_net,state,obs,done)   
+        action=UCT_mcts.act(env,self.Eval_net,state,obs,done,self.device)   
         return action
     def learning_process(self):
         self.optimizer.zero_grad()
@@ -158,7 +156,7 @@ class DQN_AGNET():
         self.learn_step+=1
         self.loss_his.append(loss.item())
 
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
 agent=DQN_AGNET(device)
 number_steps=0
@@ -189,19 +187,17 @@ reward_history_train=[]
 reward_history_test=[]
 iou_history_train=[]
 iou_history_test=[]
-done=False
 for episode in range(N_iteration):
     state, obs = env.reset()
     
     reward_train = 0
     start_time = time.time()
+    done=False
     while True:
         total_steps +=1
         action = agent.choose_action(env,state,obs,done)
-        
-
         state_next,obs_next, r, done = env.step(action)
-
+  
        
         agent.store_memory(obs, action, r, obs_next)
         reward_train += r
@@ -221,15 +217,18 @@ for episode in range(N_iteration):
             break
         state = state_next
         obs = obs_next
+       
     train_iou=env.iou()
     iou_history_train.append(train_iou)
 
     iou_test=0
     reward_test_total=0
+    IOU_test_total=0
     start_time_test = time.time()
     for _ in range(N_iteration_test):
         state, obs = env.reset()
         reward_test=0
+        done=False
         while True:
       
             action = agent.choose_action(env,state,obs,done)
@@ -246,6 +245,7 @@ for episode in range(N_iteration):
         reward_test_total+=reward_test
         iou_test+=env.iou()
     reward_test_total=reward_test_total/N_iteration_test
+    IOU_test_total= iou_test/N_iteration_test
     secs = int(time.time() - start_time_test)
     mins = secs / 60
     secs = secs % 60
@@ -256,11 +256,11 @@ for episode in range(N_iteration):
           '| Ep_IOU_test: ', iou_test/N_iteration_test)
 
     reward_history_test.append(reward_test_total)
-    iou_history_test.append(iou_test/N_iteration_test)
+    iou_history_test.append(IOU_test_total)
 
 
 
-    if reward_test_total >= best_reward:
+    if IOU_test_total >= best_reward:
         torch.save(agent.Eval_net.state_dict(), log_path+'Eval_net_episode_%d.pth' % (episode))
         torch.save(agent.Target_net.state_dict(), log_path+'Target_net_episode_%d.pth' % (episode))
 
@@ -268,7 +268,7 @@ for episode in range(N_iteration):
             pickle.dump(env.brick_memory, fp)
         with open(log_path+"position.pickle", "wb") as fp: 
             pickle.dump(env.position_memory, fp)
-        best_reward=reward_test_total
+        best_reward=IOU_test_total
 
 
 

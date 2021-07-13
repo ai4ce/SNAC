@@ -64,7 +64,8 @@ class UCT(object):
         """
         Upper Confidence Bound of a chance node
         """
+       
         return mcts_Qvalue.chance_node_value(node) + self.ucb_constant * sqrt(log(node.parent.visits)/len(node.sampled_returns))
 
-    def act(self, env,Q_Net,state, obs, done):
-        return mcts_Qvalue.mcts_procedure(self, uct_tree_policy,Q_Net,state, obs,env, done)
+    def act(self, env,Q_Net,state, obs, done,device):
+        return mcts_Qvalue.mcts_procedure(self, uct_tree_policy,Q_Net,state, obs,env, done,device)
