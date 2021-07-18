@@ -9,7 +9,7 @@ import math
 import matplotlib
 
 
-class deep_mobile_printing_2d1r_MCTS(gym.Env):
+class deep_mobile_printing_2d1r_MCTS_test(gym.Env):
     def __init__(self, plan_choose=0):
         # plan_choose: 0 Dense circle, 1 Sparse circle
 
@@ -86,7 +86,7 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
         observation = np.hstack(
             (self.observation_(initial_position), np.array([[self.count_brick]]), np.array([[self.count_step]])))
         #
-        return self.state, observation
+        return self.state, observation 
 
     def observation_(self, position):
         observation = self.environment_memory[
@@ -104,7 +104,6 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
         if position[1] >= self.plan_width + self.HALF_WINDOW_SIZE - 1:
             position[1] = self.plan_width + self.HALF_WINDOW_SIZE - 1
         return position
-    
 
     def transition(self, state, action, is_model_dynamic=True):
         step_size = np.random.randint(1, 4)
@@ -165,7 +164,6 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
         reward = 0
         state  = position, environment_memory, count_brick, count_step
         return state, observation, reward, done
-            
 
     def step(self, action):
         self.count_step += 1
@@ -244,18 +242,10 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
         self.state = (position,environment_memory,count_brick,count_step)
         return self.state, observation, reward, done
 
-    def render(self, axe, iou_min=None, iou_average=None, iter_times=1):
+    def render(self, axe, iou_min=None, iou_average=None, iter_times=1, best_env=np.array([]), best_iou=None,
+               best_step=0, best_brick=0):
 
         axe.clear()
-        plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
-               self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
-        env_memory = self.environment_memory[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
-                     self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
-        background = np.zeros((self.plan_height, self.plan_width))
-        img = np.stack((env_memory, plan, background), axis=2)
-        plt.imshow(img)
-        plt.plot(self.position_memory[-1][1] - self.HALF_WINDOW_SIZE,
-                 self.position_memory[-1][0] - self.HALF_WINDOW_SIZE, "*")
         # compute IOU
         component1 = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
                      self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width].astype(bool)
@@ -265,12 +255,30 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
         union = component1 + component2
         IOU = overlap.sum() / float(union.sum())
 
-        if iou_min is None:
+        plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
+               self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
+        if best_env.any():
+            env_memory = best_env[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
+                         self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
+            IOU = best_iou
+            step = best_step
+            brick = best_brick
+        else:
+            env_memory = self.environment_memory[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
+                         self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
+            step = self.count_step
+            brick = self.count_brick
+
+        background = np.zeros((self.plan_height, self.plan_width))
+        img = np.stack((env_memory, plan, background), axis=2)
+        plt.imshow(img)
+        plt.plot(self.position_memory[-1][1] - self.HALF_WINDOW_SIZE,
+                 self.position_memory[-1][0] - self.HALF_WINDOW_SIZE, "*")
+        if iou_min == None:
             iou_min = IOU
         if iou_average == None:
             iou_average = IOU
-
-        axe.title.set_text('step=%d,used_paint=%d,IOU=%.3f' % (self.count_step, self.count_brick, IOU))
+        axe.title.set_text('step=%d,used_paint=%d,IOU=%.3f' % (step, brick, IOU))
         plt.text(0, 21.5, 'Iou_min_iter_%d = %.3f' % (iter_times, iou_min), color='red', fontsize=12)
         plt.text(0, 20.5, 'Iou_average_iter_%d = %.3f' % (iter_times, iou_average), color='blue', fontsize=12)
         axe.axis('off')
@@ -279,7 +287,7 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
 
 
 if __name__ == "__main__":
-    env = deep_mobile_printing_2d1r_MCTS(plan_choose=1)
+    env = deep_mobile_printing_2d1r_MCTS_test(plan_choose=1)
 
     fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(1, 1, 1)

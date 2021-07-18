@@ -1,17 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import gym
-import matplotlib.patches as patches
-from gym import spaces
-from skimage import draw
-from matplotlib.path import Path
-import math
-import matplotlib
+import cv2
 
 
-class deep_mobile_printing_2d1r_MCTS(gym.Env):
+class deep_mobile_printing_2d1r(gym.Env):
     def __init__(self, plan_choose=0):
-        # plan_choose: 0 Dense circle, 1 Sparse circle
+        # plan_choose: 0 Dense triangle, 1 Sparse triangle
 
         self.step_size = 1
         self.plan_width = 20
@@ -35,27 +30,28 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
         self.plan_choose = plan_choose
 
     def create_plan(self):
-        out_radius = 7
-        if self.plan_choose == 0:
-            in_radius = 0
-        elif self.plan_choose == 1:
-            out_radius = 8
-            in_radius = 7
-        else:
-            raise ValueError('0: Dense circle, 1: Sparse circle')
+        if not (self.plan_choose == 1 or self.plan_choose == 0):
+            raise ValueError(' 0: Dense triangle, 1: Sparse triangle')
 
         plan = np.zeros((self.environment_height, self.environment_width))
-        a = np.array([12.5, 12.5])
-        circle = patches.CirclePolygon(a, out_radius)
-        circle2 = patches.CirclePolygon(a, in_radius)
-        for i in range(len(plan)):
-            for j in range(len(plan[0])):
-                a = np.array([i, j])
-                if circle.contains_point(a) and not circle2.contains_point(a):
-                    plan[i][j] = 1
-        area = sum(sum(plan))
+        area = [50, 20]
+        total_area = 0
+        while total_area <= area[self.plan_choose]:
+            x = np.random.randint(0, self.plan_width, size=3)
+            y = np.random.randint(0, self.plan_height, size=3)
 
-        return plan, area
+            img_rgb = np.ones((self.plan_height, self.plan_width, 3), np.uint8) * 255
+            vertices = np.array([[x[0], y[0]], [x[1], y[1]], [x[2], y[2]]], np.int32)
+            pts = vertices.reshape((-1, 1, 2))
+            cv2.polylines(img_rgb, [pts], isClosed=True, color=(0, 0, 0))
+            if self.plan_choose == 1:
+                cv2.fillPoly(img_rgb, [pts], color=(0, 0, 0))
+
+            plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height,
+            self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width] = 1 - img_rgb[:, :, 0] / 255
+            total_area = sum(sum(plan))
+
+        return plan, total_area
 
     def reset(self):
         self.plan, self.total_brick = self.create_plan()
@@ -68,24 +64,18 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
         self.environment_memory[:, -self.HALF_WINDOW_SIZE:] = -1
         self.environment_memory[:self.HALF_WINDOW_SIZE, :] = -1
         self.environment_memory[-self.HALF_WINDOW_SIZE:, :] = -1
-
         self.count_brick = 0
-        #
         self.position_memory = []
         self.observation = None
         self.count_step = 0
         initial_position = [self.HALF_WINDOW_SIZE, self.HALF_WINDOW_SIZE]
-
         self.position_memory.append(initial_position)
-
         environment_memory=self.environment_memory.copy()
         count_brick=self.count_brick
         count_step=self.count_step
-        
         self.state = (initial_position,environment_memory,count_brick,count_step)
         observation = np.hstack(
             (self.observation_(initial_position), np.array([[self.count_brick]]), np.array([[self.count_step]])))
-        #
         return self.state, observation
 
     def observation_(self, position):
@@ -104,7 +94,6 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
         if position[1] >= self.plan_width + self.HALF_WINDOW_SIZE - 1:
             position[1] = self.plan_width + self.HALF_WINDOW_SIZE - 1
         return position
-    
 
     def transition(self, state, action, is_model_dynamic=True):
         step_size = np.random.randint(1, 4)
@@ -256,20 +245,21 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
         plt.imshow(img)
         plt.plot(self.position_memory[-1][1] - self.HALF_WINDOW_SIZE,
                  self.position_memory[-1][0] - self.HALF_WINDOW_SIZE, "*")
-        # compute IOU
+        ###  compute IOU
         component1 = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
                      self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width].astype(bool)
         component2 = self.environment_memory[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
                      self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width].astype(bool)
-        overlap = component1 * component2
-        union = component1 + component2
+        overlap = component1 * component2  # Logical AND
+        union = component1 + component2  # Logical OR
         IOU = overlap.sum() / float(union.sum())
 
-        if iou_min is None:
+        # Add the patch to the Axes
+        if iou_min == None:
             iou_min = IOU
         if iou_average == None:
             iou_average = IOU
-
+        # axe.add_patch(rect)
         axe.title.set_text('step=%d,used_paint=%d,IOU=%.3f' % (self.count_step, self.count_brick, IOU))
         plt.text(0, 21.5, 'Iou_min_iter_%d = %.3f' % (iter_times, iou_min), color='red', fontsize=12)
         plt.text(0, 20.5, 'Iou_average_iter_%d = %.3f' % (iter_times, iou_average), color='blue', fontsize=12)
@@ -279,18 +269,18 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
 
 
 if __name__ == "__main__":
-    env = deep_mobile_printing_2d1r_MCTS(plan_choose=1)
+    env = deep_mobile_printing_2d1r(plan_choose=1)
 
-    fig = plt.figure(figsize=(5, 5))
+    fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     total_reward = 0
     env.reset()
     env.render(ax)
-    print(env.total_brick)
+    print("total_brick:", env.total_brick)
     while True:
         state, obs, reward, done = env.step(np.random.randint(5))
         env.render(ax)
-        plt.pause(0.01)
+        plt.pause(0.1)
         total_reward += reward
         if done:
             break
