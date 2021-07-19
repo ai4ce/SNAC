@@ -93,6 +93,11 @@ class deep_mobile_printing_2d1r_MCTS_test(gym.Env):
                       position[0] - self.HALF_WINDOW_SIZE:position[0] + self.HALF_WINDOW_SIZE + 1, \
                       position[1] - self.HALF_WINDOW_SIZE:position[1] + self.HALF_WINDOW_SIZE + 1]
         return observation.flatten().reshape(1, -1)
+    def observation_transition(self, environment_memory, position):
+        observation = environment_memory[
+                      position[0] - self.HALF_WINDOW_SIZE:position[0] + self.HALF_WINDOW_SIZE + 1, \
+                      position[1] - self.HALF_WINDOW_SIZE:position[1] + self.HALF_WINDOW_SIZE + 1]
+        return observation.flatten().reshape(1, -1)
 
     def clip_position(self, position):
         if position[0] <= self.HALF_WINDOW_SIZE:
@@ -139,7 +144,7 @@ class deep_mobile_printing_2d1r_MCTS_test(gym.Env):
                     environment_memory[position[0], position[1]] = 1.0
 
                 observation = np.hstack(
-                    (self.observation_(position), np.array([[count_brick]]), np.array([[count_step]])))
+                    (self.observation_transition(environment_memory,position), np.array([[count_brick]]), np.array([[count_step]])))
                 reward = 0.0
                 state  = position, environment_memory, count_brick, count_step
                 return state, observation, reward, done
@@ -153,14 +158,14 @@ class deep_mobile_printing_2d1r_MCTS_test(gym.Env):
                 if environment_memory[position[0], position[1]] > 1.0:
                     environment_memory[position[0], position[1]] = 1.0
                 observation = np.hstack(
-                    (self.observation_(position), np.array([[count_brick]]), np.array([[count_step]])))
+                    (self.observation_transition(environment_memory,position), np.array([[count_brick]]), np.array([[count_step]])))
                 state  = position, environment_memory, count_brick, count_step
                 return state, observation, reward, done
                 
 
         done = bool(count_step >= self.total_step)
         observation = np.hstack(
-            (self.observation_(position), np.array([[count_brick]]), np.array([[count_step]])))
+            (self.observation_transition(environment_memory,position), np.array([[count_brick]]), np.array([[count_step]])))
         reward = 0
         state  = position, environment_memory, count_brick, count_step
         return state, observation, reward, done
