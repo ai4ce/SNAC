@@ -31,6 +31,7 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
         self.total_brick = 0
         self.one_hot = None
         self.action_dim = 5
+        self.action_space = spaces.Discrete(self.action_dim)
         self.state_dim = (2 * self.HALF_WINDOW_SIZE + 1) ** 2 + 2
         self.plan_choose = plan_choose
 
@@ -249,8 +250,13 @@ class deep_mobile_printing_2d1r_MCTS(gym.Env):
         self.state = (position,environment_memory,count_brick,count_step)
         return self.state, observation, reward, done
 
-    def render(self, axe, iou_min=None, iou_average=None, iter_times=1):
+    def equality_operator(self, o1, o2):
+        Equal=True 
+        if not np.array_equal(o1,o2):
+            return False
+        return Equal
 
+    def render(self, axe, iou_min=None, iou_average=None, iter_times=1):
         axe.clear()
         plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
                self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]

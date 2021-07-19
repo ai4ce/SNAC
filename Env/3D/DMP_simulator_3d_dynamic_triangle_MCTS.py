@@ -14,14 +14,11 @@ import cv2
 
 class deep_mobile_printing_3d1r(gym.Env):
     def __init__(self, plan_choose=1):
-
         self.step_size = 1
-
         self.plan_width = 20  # X Axis
         self.plan_height = 20  # Y Axis
         self.plan_length = 10  # Z Axis
         self.z = 6
-
         self.environment_memory = None
         self.count_brick = None
         self.brick_memory = None
@@ -42,7 +39,7 @@ class deep_mobile_printing_3d1r(gym.Env):
         # up, down, left, right,
         # up_brick, down_brick, left_brick, right_brick
         self.action_dim = 8
-
+        self.action_space = spaces.Discrete(self.action_dim)
         self.state_dim = (2 * self.HALF_WINDOW_SIZE + 1) ** 2 + 2
         self.blank_size = 2  # use 0, 2, 4
         self.start = None
@@ -230,7 +227,7 @@ class deep_mobile_printing_3d1r(gym.Env):
             position = [position[0], position[1] - step_size]
             position = self.clip_position(position)
         elif action == 1 and check[1] == 0:
-            step_size = self.move_step_transition(environment_memory,[positio[0], position[1]], action,
+            step_size = self.move_step_transition(environment_memory,[position[0], position[1]], action,
                                        step_size)
             position = [position[0], position[1] + step_size]
             position = self.clip_position(position)
@@ -363,7 +360,7 @@ class deep_mobile_printing_3d1r(gym.Env):
                 return self.state, observation, reward, done
             else:
                 if build_brick:
-                    reward = self.reward_check_tr(brick_target)
+                    reward = self.reward_check(brick_target)
                     observation = np.hstack(
                         (self.observation_(position), np.array([[self.count_brick]]), np.array([[self.count_step]])))
                     environment_memory=self.environment_memory.copy()
@@ -402,6 +399,11 @@ class deep_mobile_printing_3d1r(gym.Env):
         else:
             reward = 1.0
         return reward
+    def equality_operator(self, o1, o2):
+        Equal=True 
+        if not np.array_equal(o1,o2):
+            return False
+        return Equal
 
     def plot_3d(self, plan, Env=False):
         if Env:
