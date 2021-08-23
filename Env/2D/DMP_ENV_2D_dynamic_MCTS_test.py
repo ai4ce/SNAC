@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import gym
 import cv2
+from gym import spaces
 
 
 class deep_mobile_printing_2d1r(gym.Env):
@@ -26,6 +27,7 @@ class deep_mobile_printing_2d1r(gym.Env):
         self.total_brick = 0
         self.one_hot = None
         self.action_dim = 5
+        self.action_space = spaces.Discrete(self.action_dim)
         self.state_dim = (2 * self.HALF_WINDOW_SIZE + 1) ** 2 + 2
         self.plan_choose = plan_choose
         self.tests_set = test_set
@@ -252,6 +254,11 @@ class deep_mobile_printing_2d1r(gym.Env):
                     
         self.state = (position,environment_memory,count_brick,count_step)
         return self.state, observation, reward, done
+    def equality_operator(self, o1, o2):
+        Equal=True 
+        if not np.array_equal(o1,o2):
+            return False
+        return Equal
 
     def render(self, axe, iou_min=None, iou_average=None, iter_times=1, best_env=np.array([]), best_iou=None,
                best_step=0, best_brick=0):

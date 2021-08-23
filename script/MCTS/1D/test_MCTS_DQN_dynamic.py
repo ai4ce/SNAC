@@ -11,17 +11,19 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time
 import os
+sys.path.append('../../../Env/1D/')
+sys.path.append('../utils')
 from collections import deque
 import uct_dynamic
-sys.path.append('../../../Env/1D/')
-from DMP_Env_1D_dynamic_MCTS_obs_test import deep_mobile_printing_1d1r_MCTS_obs
-pth_plan = '181'
 
-save_path = "./plot/Dynamic/DQN_1d_dynamic_lr0.0001_rollouts10_ucb_constant0.5/"
-load_path = "./log/Dynamic/DQN_1d_dynamic_lr0.0001_rollouts10_ucb_constant0.5/"
+from DMP_Env_1D_dynamic_MCTS_obs_test import deep_mobile_printing_1d1r_MCTS_obs
+pth_plan = '2731'
+
+save_path = "./plot/Dynamic/DQN_1d_sincurve_lr0.00001_rollouts20_ucb_constant0.5/"
+load_path = "./log/dynamic/DQN_1d_sincurve_lr1e-05_rollouts20_ucb_constant0.5/"
 if os.path.exists(save_path) == False:
     os.makedirs(save_path)
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 
 print('1D_Dynamic')
 print("device_using:", device)
@@ -35,7 +37,7 @@ for plan_choose in range(10):
     minibatch_size = 2000
     Lr = 0.001
    
-    N_iteration_test = 5
+    N_iteration_test = 200
     alpha = 0.9
     Replay_memory_size = 50000
     Update_traget_period = 200
@@ -83,7 +85,7 @@ for plan_choose in range(10):
             return Q
     UCT_mcts = uct_dynamic.UCT(
     action_space=env.action_space,
-    rollouts=10,
+    rollouts=20,
     horizon=100,
     ucb_constant=0.5,
     is_model_dynamic=True)
@@ -178,6 +180,7 @@ for plan_choose in range(10):
     fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(1, 1, 1)
     for ep in range(N_iteration_test):
+        print(ep)
         state, obs = env.reset()
         
         

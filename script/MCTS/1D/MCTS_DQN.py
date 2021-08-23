@@ -34,12 +34,12 @@ FINAL_EPSILON = 0.0
 PALN_CHOICE=2  ##0: sin 1: Guassian 2:step
 ROLLOUT=20
 UCB_CONSTANT=2
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 PLAN_LIST=["sin","Gaussian","step"]
 PLAN_NAME=PLAN_LIST[PALN_CHOICE]
-OUT_FILE_NAME="DQN_1d_"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)
+OUT_FILE_NAME="DQN_1d_test_iou"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)
 print(OUT_FILE_NAME)
-log_path="./log/static/"+OUT_FILE_NAME+"/"
+log_path="./log_test_iou/static/"+OUT_FILE_NAME+"/"
 env = deep_mobile_printing_1d1r_MCTS(plan_choose=PALN_CHOICE)
 
 if os.path.exists(log_path)==False:

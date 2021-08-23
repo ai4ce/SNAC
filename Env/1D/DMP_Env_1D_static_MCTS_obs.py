@@ -256,6 +256,21 @@ class deep_mobile_printing_1d1r_MCTS(gym.Env):
         area_cross = area2 - k
         iou = area_cross / (area1 + area2 - area_cross)
         return iou
+    def iou_MCTS(self,environment_memory):
+        component1 = self.plan
+        component2 = environment_memory[0][self.HALF_WINDOW_SIZE:self.plan_width + self.HALF_WINDOW_SIZE]
+
+        area1 = sum(component1)
+        area2 = sum(component2)
+        k = 0
+        for i in range(self.plan_width):
+            if component2[i] > component1[i]:
+                j = component2[i] - component1[i]
+                k += j
+        area_cross = area2 - k
+        iou = area_cross / (area1 + area2 - area_cross)
+        return iou
+
 
     def render(self, axe, iou_min=None, iou_average=None, iter_times=1, best_env=np.array([]), best_iou=None,
                best_step=0, best_brick=0):
