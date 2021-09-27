@@ -12,7 +12,7 @@ All environment scripts can be found in [Env](https://github.com/ai4ce/SNAC/tree
 Our environment is developed based on the [OpenAi Gym](https://gym.openai.com/). You can simply follow the similar way to use our environment. Here we present a example for using 1D static task environment.
 ```
 from DMP_Env_1D_static import deep_mobile_printing_1d1r ### you may need to find the path to this environment 
-env = deep_mobile_printing_1d1r(plan_choose=2) ### plan_choose could be 0: sin 1: Gaussian, and 2: Step curve  
+env = deep_mobile_printing_1d1r(plan_choose=2) ### plan_choose could be 0: sin, 1: Gaussian, and 2: Step curve  
 observation = env.reset()
 for _ in range(1000):
   action = np.random.randint(env.action_dim) # your agent here (this takes random actions)
