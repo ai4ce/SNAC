@@ -27,6 +27,26 @@ following publication:
 Wenyu Han, Chen Feng, Haoran Wu, Alexander Gao, Armand Jordana, Dong Liu, Lerrel Pinto, and Ludovic Righetti,    
 "Simultaneous Navigation and Construction Benchmarking Environments (arXiv)". 
 ``` 
+## How to use
+
+Our environment is developed based on the [OpenAi Gym](https://gym.openai.com/). You can simply follow the similar way to use our environment. Here we present an example for using 1D static task environment.
+```
+from DMP_Env_1D_static import deep_mobile_printing_1d1r ### you may need to find the path to this environment in [Env] folder 
+env = deep_mobile_printing_1d1r(plan_choose=2) ### plan_choose could be 0: sin, 1: Gaussian, and 2: Step curve  
+observation = env.reset()
+fig = plt.figure(figsize=(5, 5))
+ax = fig.add_subplot(1, 1, 1)
+ax.clear()
+for _ in range(1000):
+  action = np.random.randint(env.action_dim) # your agent here (this takes random actions)
+  observation, reward, done = env.step(action)
+  env.render(ax)
+  plt.pause(0.1)
+  if done:
+    break
+plt.show()
+```
+
 ## [Paper (arXiv)](https://arxiv.org/abs/2103.16732)
 To cite our paper:
 ```
