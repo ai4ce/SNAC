@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 import time
 from collections import deque
 import heapq 
+import statistics
 
-
-sys.path.append('../Env/3D/')
+sys.path.append('../../Env/3D/')
 from DMP_simulator_3d_dynamic_triangle_test import deep_mobile_printing_3d1r
 
 
@@ -267,8 +267,9 @@ def planing(position,obs,current_action_prior):
 
 iou_all_average = 0
 iou_all_min = 1
-
+std_his=[]
 for plan_choose in range(2):
+    iou_his=[]
     for test_set in range(10):
         env = deep_mobile_printing_3d1r(plan_choose=plan_choose, test_set=test_set)
         ######################
@@ -327,6 +328,7 @@ for plan_choose in range(2):
                 
             iou_test=env.iou()
             iou_history.append(iou_test)
+            iou_his.append(iou_test)
 
             iou_min = min(iou_min,iou_test)
             if iou_test > best_iou:
@@ -357,12 +359,12 @@ for plan_choose in range(2):
         print('iou_min:',min(iou_history))
         # env.render(ax)
         
-        if best_iou>0:
-            env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
-                       best_iou=best_iou,best_step=best_step,best_brick=best_brick,position_memo = best_posi)
-        else:
-            env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
-        plt.savefig(save_path + "Plan" + str(plan_choose) +'_test'+str(test_set) + '.png')
+        # if best_iou>0:
+        #     env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
+        #                best_iou=best_iou,best_step=best_step,best_brick=best_brick,position_memo = best_posi)
+        # else:
+        #     env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
+        # plt.savefig(save_path + "Plan" + str(plan_choose) +'_test'+str(test_set) + '.png')
 
         # while True:
         #     action,hidden_state_next, cell_state_next = test_agent.choose_action(state,env_plan,hidden_state, cell_state)
@@ -376,9 +378,12 @@ for plan_choose in range(2):
         #         break
         #     state = state_next
         #     hidden_state, cell_state = hidden_state_next, cell_state_next
+    std = statistics.pstdev(iou_his)
+    std_his.append(std)
 
 iou_all_average = iou_all_average/20
 print('#### Finish #####')
 print('iou_all_average',iou_all_average)
 print('iou_all_min',iou_all_min)
-plt.show()
+print("std",std_his)
+# plt.show()

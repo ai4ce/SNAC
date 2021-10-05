@@ -15,6 +15,7 @@ sys.path.append('../../../Env/1D/')
 sys.path.append('../utils')
 from collections import deque
 import uct_dynamic
+import statistics
 
 from DMP_Env_1D_dynamic_MCTS_obs_test import deep_mobile_printing_1d1r_MCTS_obs
 pth_plan = '2731'
@@ -29,6 +30,8 @@ print('1D_Dynamic')
 print("device_using:", device)
 iou_all_average = 0
 iou_all_min = 1
+
+iou_his=[]
 for plan_choose in range(10):
 
     env = deep_mobile_printing_1d1r_MCTS_obs(plan_choose=plan_choose)
@@ -199,6 +202,7 @@ for plan_choose in range(10):
             obs = obs_next
 
         iou_test = env.iou()
+        iou_his.append(iou_test)
         iou_min = min(iou_min, iou_test)
 
         if iou_test > best_iou:
@@ -216,14 +220,15 @@ for plan_choose in range(10):
     secs = int(time.time() - start_time_test)
     mins = secs / 60
     secs = secs % 60
-    env.render(ax, iou_average=iou_test_total, iou_min=iou_min, iter_times=N_iteration_test, best_env=best_env,
-               best_iou=best_iou, best_step=best_step, best_brick=best_brick)
+    # env.render(ax, iou_average=iou_test_total, iou_min=iou_min, iter_times=N_iteration_test, best_env=best_env,
+    #            best_iou=best_iou, best_step=best_step, best_brick=best_brick)
 
     iou_all_average += iou_test_total
     iou_all_min = min(iou_min,iou_all_min)
-    plt.savefig(save_path+"Plan_one_hot_"+str(plan_choose)+'.png')
-
+    # plt.savefig(save_path+"Plan_one_hot_"+str(plan_choose)+'.png')
+std = statistics.pstdev(iou_his)
 iou_all_average = iou_all_average/10
 print('iou_all_average',iou_all_average)
-print('iou_all_min',iou_all_min)
-plt.show()
+print("iou std",std)
+# print('iou_all_min',iou_all_min)
+# plt.show()

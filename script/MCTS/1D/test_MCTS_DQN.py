@@ -12,10 +12,11 @@ sys.path.append('../../../Env/1D/')
 sys.path.append('../utils')
 from DMP_Env_1D_static_MCTS_obs_test import deep_mobile_printing_1d1r_MCTS_obs_test
 import uct
+import statistics
 
 
 save_path = "./plot/Static/"
-load_path = "./log/static/DQN_1d_step_lr1e-05_rollouts20_ucb_constant0.5/"
+load_path = "./log/static/DQN_1d_Gaussian_lr0.0001_rollouts20_ucb_constant0.5/"
 if os.path.exists(save_path) == False:
     os.makedirs(save_path)
 device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
@@ -23,7 +24,7 @@ device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 iou_all_average = 0
 iou_all_min = 1
 
-env = deep_mobile_printing_1d1r_MCTS_obs_test(plan_choose=2)
+env = deep_mobile_printing_1d1r_MCTS_obs_test(plan_choose=1)
     ######################
     # hyper parameter
 minibatch_size=2000
@@ -158,7 +159,7 @@ class DQN_AGNET():
 
 
 test_agent = DQN_AGNET(device)
-log_path = load_path + "Eval_net_episode_2351"
+log_path = load_path + "Eval_net_episode_1917"
 
 test_agent.Eval_net.load_state_dict(torch.load(log_path  + ".pth", map_location='cpu'))
 test_agent.Eval_net.eval()
@@ -166,6 +167,7 @@ best_iou = 0
 best_env = np.array([])
 iou_test_total = 0
 iou_min = 1
+iou_his=[]
 reward_test_total = 0
 start_time_test = time.time()
 fig = plt.figure(figsize=(5, 5))
@@ -184,6 +186,7 @@ for ep in range(N_iteration_test):
         state = state_next
         obs = obs_next
     iou_test = env.iou()
+    iou_his.append(iou_test)
     iou_min = min(iou_min, iou_test)
 
     if iou_test > best_iou:
@@ -204,13 +207,17 @@ iou_test_total = iou_test_total / N_iteration_test
 secs = int(time.time() - start_time_test)
 mins = secs / 60
 secs = secs % 60
-env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
+# env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
+std = statistics.pstdev(iou_his)
+print("iou_all_average",iou_test_total)
+print("iou std",std)
 
-# iou_all_average += iou_test_total
-# iou_all_min = min(iou_min,iou_all_min)
-plt.savefig(save_path+"Plan"+str(3)+'.png')
+
+# # iou_all_average += iou_test_total
+# # iou_all_min = min(iou_min,iou_all_min)
+# plt.savefig(save_path+"Plan"+str(3)+'.png')
 
 
-# print('iou_all_average',iou_all_average)
-# print('iou_all_min',iou_all_min)
-plt.show()
+# # print('iou_all_average',iou_all_average)
+# # print('iou_all_min',iou_all_min)
+# plt.show()

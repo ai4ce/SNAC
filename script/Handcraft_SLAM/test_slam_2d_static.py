@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 import time
 from collections import deque
 import heapq 
-
-sys.path.append('../Env/2D/')
+import statistics
+sys.path.append('../../Env/2D/')
 from DMP_Env_2D_static_test import deep_mobile_printing_2d1r
 
 save_path = "./log/slam/plot/2D/Static/"
@@ -209,8 +209,9 @@ def planing(position,obs,current_action_prior):
     
 
 
-
+std_his=[]
 for plan_choose in range(2):
+    iou_his=[]
     env = deep_mobile_printing_2d1r(plan_choose=plan_choose)
     ######################
     # hyper parameter
@@ -273,6 +274,7 @@ for plan_choose in range(2):
             current_action_prior=next_action_prior
         iou_test=iou(env.environment_memory,env.plan,env.HALF_WINDOW_SIZE,env.plan_height,env.plan_width)
         iou_history.append(iou_test)
+        iou_his.append(iou_test)
 
         iou_min = min(iou_min,iou_test)
         if iou_test > best_iou:
@@ -291,6 +293,8 @@ for plan_choose in range(2):
     secs = int(time.time() - start_time_test)
     mins = secs / 60
     secs = secs % 60
+    std = statistics.pstdev(iou_his)
+    std_his.append(std)
 
     iou_all_average += iou_test_total
     iou_all_min = min(iou_min,iou_all_min)
@@ -301,8 +305,8 @@ for plan_choose in range(2):
     print('iou_his:',iou_history)
     print('iou_min:',min(iou_history))
     # env.render(ax)
-    env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
-    plt.savefig(save_path + "Plan" + str(plan_choose) + '.png')
+    # env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
+    # plt.savefig(save_path + "Plan" + str(plan_choose) + '.png')
 
 
     # while True:
@@ -322,4 +326,5 @@ iou_all_average = iou_all_average/2
 print('#### Finish #####')
 print('iou_all_average',iou_all_average)
 print('iou_all_min',iou_all_min)
-plt.show()
+print("std",std_his)
+# plt.show()

@@ -15,7 +15,8 @@ def get_args():
                         help='Batch size')
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')
-
+    parser.add_argument('--cuda_number', type=str, default='cuda:0',
+                        help='which GPU to use')
     # Training Arguments
     parser.add_argument('--max-frames', type=int, default=2150000, metavar='STEPS',
                         help='Number of frames to train')
@@ -45,15 +46,15 @@ def get_args():
                         help='Number of evaluation episodes to average over')
 
     # Algorithm Arguments
-    parser.add_argument('--double', action='store_true',
+    parser.add_argument('--double', action='store_false',
                         help='Enable Double-Q Learning')
-    parser.add_argument('--dueling', action='store_true',
+    parser.add_argument('--dueling', action='store_false',
                         help='Enable Dueling Network')
-    parser.add_argument('--noisy', action='store_true',
+    parser.add_argument('--noisy', action='store_false',
                         help='Enable Noisy Network')
-    parser.add_argument('--prioritized-replay', action='store_true',
+    parser.add_argument('--prioritized-replay', action='store_false',
                         help='enable prioritized experience replay')
-    parser.add_argument('--c51', action='store_true',
+    parser.add_argument('--c51', action='store_false',
                         help='enable categorical dqn')
     parser.add_argument('--multi-step', type=int, default=3,
                         help='N-Step Learning')
@@ -106,6 +107,7 @@ def get_args():
 
     args = parser.parse_args()
     args.cuda = not args.no_cuda and torch.cuda.is_available()
-    args.device = torch.device("cuda" if args.cuda else "cpu")
+    args.device = torch.device(args.cuda_number if args.cuda else "cpu")
+    print(args.device)
 
     return args

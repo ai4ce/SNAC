@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import time
 import os
 from slam_1d_no_map import RobotMove
-
+import statistics
 pth_plan = '7456'
 
 sys.path.append('../../Env/1D/')
@@ -17,6 +17,7 @@ if os.path.exists(save_path) == False:
 print('1D_Dynamic')
 iou_all_average = 0
 iou_all_min = 1
+iou_his=[]
 for plan_choose in range(10):
 
     env = deep_mobile_printing_1d1r(plan_choose=plan_choose)
@@ -74,6 +75,7 @@ for plan_choose in range(10):
 
         iou_test = env.iou()
         iou_min = min(iou_min, iou_test)
+        iou_his.append(iou_test)
 
         if iou_test > best_iou:
             best_iou = iou_test
@@ -89,16 +91,18 @@ for plan_choose in range(10):
     secs = int(time.time() - start_time_test)
     mins = secs / 60
     secs = secs % 60
-    env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
-               best_iou=best_iou,best_step=best_step,best_brick=best_brick)
+    # env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
+    #            best_iou=best_iou,best_step=best_step,best_brick=best_brick)
     iou_all_average += iou_test_total
     iou_all_min = min(iou_min,iou_all_min)
-    plt.savefig(save_path+"Plan_test_"+str(plan_choose)+'.png')
+    # plt.savefig(save_path+"Plan_test_"+str(plan_choose)+'.png')
 
 iou_all_average = iou_all_average/10
 print('iou_all_average',iou_all_average)
 print('iou_all_min',iou_all_min)
-plt.show()
+std = statistics.pstdev(iou_his)
+print("std",std)
+# plt.show()
 
 #with map
 # iou_all_average 0.9443759847945794

@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-
 import os
 import sys
 import torch
@@ -12,8 +10,8 @@ import matplotlib.pyplot as plt
 import time
 from collections import deque
 import heapq 
-
-sys.path.append('../Env/3D/')
+import statistics
+sys.path.append('../../Env/3D/')
 from DMP_simulator_3d_static_circle_test import deep_mobile_printing_3d1r
 
 save_path = "./log/slam/plot/3D_modify/Static/"
@@ -266,8 +264,9 @@ def planing(position,obs,current_action_prior):
     return action,current_action_prior 
 
 
-
+std_his=[]
 for plan_choose in range(2):
+    iou_his=[]
     env = deep_mobile_printing_3d1r(plan_choose=plan_choose)
     ######################
     # hyper parameter
@@ -318,6 +317,7 @@ for plan_choose in range(2):
             current_action_prior=next_action_prior
         iou_test=env.iou()
         iou_history.append(iou_test)
+        iou_his.append(iou_test)
 
         iou_min = min(iou_min,iou_test)
         if iou_test > best_iou:
@@ -337,6 +337,8 @@ for plan_choose in range(2):
     secs = int(time.time() - start_time_test)
     mins = secs / 60
     secs = secs % 60
+    std = statistics.pstdev(iou_his)
+    std_his.append(std)
 
     iou_all_average += iou_test_total
     iou_all_min = min(iou_min,iou_all_min)
@@ -347,12 +349,12 @@ for plan_choose in range(2):
     print('iou_his:',iou_history)
     print('iou_min:',min(iou_history))
     # env.render(ax)
-    if best_iou>0:
-        env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
-                   best_iou=best_iou,best_step=best_step,best_brick=best_brick,position_memo = best_posi)
-    else:
-        env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
-    plt.savefig(save_path + "Plan" + str(plan_choose) + '.png')
+    # if best_iou>0:
+    #     env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
+    #                best_iou=best_iou,best_step=best_step,best_brick=best_brick,position_memo = best_posi)
+    # else:
+    #     env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
+    # plt.savefig(save_path + "Plan" + str(plan_choose) + '.png')
 
 
     # while True:
@@ -372,4 +374,5 @@ iou_all_average = iou_all_average/2
 print('#### Finish #####')
 print('iou_all_average',iou_all_average)
 print('iou_all_min',iou_all_min)
-plt.show()
+print("std",std_his)
+# plt.show()

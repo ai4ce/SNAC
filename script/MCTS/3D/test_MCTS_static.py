@@ -12,7 +12,7 @@ import sys
 sys.path.append('../../../Env/3D/')
 sys.path.append('../utils')
 import uct
-
+import statistics
 from DMP_simulator_3d_static_circle_MCTS_test import deep_mobile_printing_3d1r
 
 save_path = "./plot/Static/"
@@ -153,7 +153,7 @@ best_env = np.array([])
 fig = plt.figure(figsize=[10, 5])
 ax1 = fig.add_subplot(1, 2, 1, projection='3d')
 ax2 = fig.add_subplot(1, 2, 2)
-
+iou_his=[]
 for i in range(N_iteration_test):
     state, obs = env.reset()
     reward_test=0
@@ -169,6 +169,7 @@ for i in range(N_iteration_test):
         obs = obs_next
     iou_test=env.iou()
     iou_history.append(iou_test)
+    iou_his.append(iou_test)
     iou_min = min(iou_min,iou_test)
     if iou_test > best_iou:
         best_iou = iou_test
@@ -197,14 +198,16 @@ print("total_brick:", env.total_brick)
 print('iou_his:',iou_history)
 print('iou_min:',min(iou_history))
 # env.render(ax)
-if best_iou>0:
-    env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
-               best_iou=best_iou,best_step=best_step,best_brick=best_brick,position_memo = best_posi)
-else:
-    env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
-plt.savefig(save_path + "Plan" + str(plan_choose) + '.png')
+# if best_iou>0:
+#     env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
+#                best_iou=best_iou,best_step=best_step,best_brick=best_brick,position_memo = best_posi)
+# else:
+#     env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
+# plt.savefig(save_path + "Plan" + str(plan_choose) + '.png')
 iou_all_average = iou_all_average/2
 print('#### Finish #####')
 print('iou_all_average',iou_all_average)
 print('iou_all_min',iou_all_min)
-plt.show()
+# plt.show()
+std = statistics.pstdev(iou_his)
+print("iou std",std)

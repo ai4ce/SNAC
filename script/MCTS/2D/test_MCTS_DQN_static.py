@@ -13,9 +13,10 @@ sys.path.append('../../../Env/2D/')
 sys.path.append('../utils')
 from DMP_ENV_2D_static_MCTS_test import deep_mobile_printing_2d1r_MCTS_test
 import uct
+import statistics
 
 save_path = "./plot/Static/"
-load_path = "./log/static/DQN_2d_sparsecircle_lr0.0001_rollouts20_ucb_constant0.5/"
+load_path = "./log/static/DQN_2d_densecircle_lr0.0001_rollouts20_ucb_constant0.5/"
 if os.path.exists(save_path) == False:
     os.makedirs(save_path)
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
@@ -31,7 +32,7 @@ N_iteration = 3000
 N_iteration_test = 500
 ROLLOUT=20
 UCB_CONSTANT=0.5
-Plan_choose=1 ## 0: densecircle 1: sparsecircle
+Plan_choose=0 ## 0: densecircle 1: sparsecircle
 alpha = 0.9
 Replay_memory_size = 50000
 Update_traget_period = 200
@@ -153,7 +154,7 @@ class DQN_AGNET():
 
 
 test_agent=DQN_AGNET(device)
-log_path = load_path  + "Eval_net_episode_2973"
+log_path = load_path  + "Eval_net_episode_2064"
 test_agent.Eval_net.load_state_dict(torch.load(log_path +".pth" ,map_location=device))
 best_iou=0
 best_env = np.array([])
@@ -164,7 +165,7 @@ iou_history = []
 start_time_test = time.time()
 fig = plt.figure(figsize=(5, 5))
 ax = fig.add_subplot(1, 1, 1)
-
+iou_his=[]
 for i in range(N_iteration_test):
     state, obs = env.reset()    
     reward_test=0
@@ -207,8 +208,8 @@ iou_all_min = min(iou_min,iou_all_min)
 print("total_brick:", env.total_brick)
 print('iou_his:',iou_history)
 print('iou_min:',min(iou_history))
-env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
-plt.savefig(save_path + "Plan" + str(Plan_choose) + '.png')
+# env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
+# plt.savefig(save_path + "Plan" + str(Plan_choose) + '.png')
     # while True:
     #     state = state.reshape(state.shape[-1])
     #     action = test_agent.choose_action(state, env_plan)
@@ -222,8 +223,9 @@ plt.savefig(save_path + "Plan" + str(Plan_choose) + '.png')
     #         plt.savefig(save_path + "Plan" + str(plan_choose) + '.png')
     #         break
     #     state = state_next
-
-iou_all_average = iou_all_average/2
+std = statistics.pstdev(iou_history)
+# iou_all_average = iou_all_average/2
 print('iou_all_average',iou_all_average)
 print('iou_all_min',iou_all_min)
-plt.show()
+print("iou std",std)
+# plt.show()

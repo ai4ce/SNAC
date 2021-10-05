@@ -82,9 +82,10 @@ def save_model(model, args, datetime):
     if args.noisy:
         fname += "noisy-"
     fname += "dqn-{}.pth".format(datetime)
+    file_path=os.path.join(args.results_path, "models")
     fname = os.path.join(args.results_path, "models", fname)
-
-    pathlib.Path('models').mkdir(exist_ok=True)
+    if os.path.exists(file_path)==False:
+        os.makedirs(file_path)
     torch.save(model.state_dict(), fname)
 
 def save_plot(args, datetime):
@@ -125,7 +126,8 @@ def save_hyperparameters(args, datetime):
         fname += "noisy-"
     fname += "dqn-{}.txt".format(datetime)
     fname = os.path.join(args.results_path, fname)
-
+    if os.path.exists(args.results_path)==False:
+        os.makedirs(args.results_path)
     with open(fname, "w") as f:
         for k, v in vars(args).items():
             f.write(k + ': ' + str(v) + "\n")

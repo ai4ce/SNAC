@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 sys.path.append('../Env/1D/')
-from DMP_Env_1D_static import deep_mobile_printing_1d1r
+#from DMP_Env_1D_static import deep_mobile_printing_1d1r
 
 class RobotMove:
     def __init__(self, env):

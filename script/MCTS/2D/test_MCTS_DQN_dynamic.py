@@ -8,7 +8,7 @@ import pickle
 import matplotlib.pyplot as plt
 import time
 from collections import deque
-
+import statistics
 import sys
 pth_plan = ['1596', '1841']
 sys.path.append('../../../Env/2D/')
@@ -19,14 +19,14 @@ save_path = "./plot/Dynamic/"
 load_path = "./log/dynamic/"
 if os.path.exists(save_path) == False:
     os.makedirs(save_path)
-device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 
 print('2D_Static')
 
 iou_all_average = 0
 iou_all_min = 1
 
-
+iou_his=[]
 for test_set in range(10):
     plan_choose=1 ## 0:densetriangle 1:sparsetriangle
     env = deep_mobile_printing_2d1r(plan_choose=plan_choose, test_set=test_set)
@@ -210,6 +210,7 @@ for test_set in range(10):
             obs = obs_next 
         iou_test=iou(env.environment_memory,env.plan,env.HALF_WINDOW_SIZE,env.plan_height,env.plan_width)
         iou_history.append(iou_test)
+        iou_his.append(iou_test)
 
         iou_min = min(iou_min,iou_test)
         if iou_test > best_iou:
@@ -235,8 +236,8 @@ for test_set in range(10):
     print("total_brick:", env.total_brick)
     print('iou_his:',iou_history)
     print('iou_min:',min(iou_history))
-    env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
-    plt.savefig(save_path + "Plan" + str(plan_choose) +'_test'+str(test_set) + '.png')
+    # env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
+    # plt.savefig(save_path + "Plan" + str(plan_choose) +'_test'+str(test_set) + '.png')
 
 
         # while True:
@@ -257,4 +258,6 @@ iou_all_average = iou_all_average/20
 print('#### Finish #####')
 print('iou_all_average',iou_all_average)
 print('iou_all_min',iou_all_min)
-plt.show()
+std = statistics.pstdev(iou_his)
+print("iou std",std)
+# plt.show()
