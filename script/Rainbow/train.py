@@ -180,10 +180,8 @@ def compute_td_loss(current_model, target_model, replay_buffer, optimizer, args,
         action = action.unsqueeze(1).unsqueeze(1).expand(args.batch_size, 1, args.num_atoms)
         q_dist = q_dist.gather(1, action).squeeze(1)
         q_dist.data.clamp_(0.001, 0.999)
-
         target_dist = projection_distribution(current_model, target_model, next_state, reward, done, 
                                               target_model.support, target_model.offset, args)
-
         loss = - (target_dist * q_dist.log()).sum(1)
         if args.prioritized_replay:
             prios = torch.abs(loss) + 1e-6
@@ -200,9 +198,7 @@ def compute_td_loss(current_model, target_model, replay_buffer, optimizer, args,
 
 def projection_distribution(current_model, target_model, next_state, reward, done, support, offset, args):
     delta_z = float(args.Vmax - args.Vmin) / (args.num_atoms - 1)
-
-    target_next_q_dist = target_model(torch.FloatTensor(next_state))
-
+    target_next_q_dist = target_model(next_state)
     if args.double:
         if args.env in ['1DDynamic', '2DDynamic']:
             next_q_dist = current_model(torch.FloatTensor(np.float32(next_state[:][0])).to(args.device),
@@ -214,20 +210,17 @@ def projection_distribution(current_model, target_model, next_state, reward, don
         next_action = (next_q_dist * support).sum(2).max(1)[1]
     else:
         next_action = (target_next_q_dist * support).sum(2).max(1)[1]
-
     next_action = next_action.unsqueeze(1).unsqueeze(1).expand(target_next_q_dist.size(0), 1, target_next_q_dist.size(2))
     target_next_q_dist = target_next_q_dist.gather(1, next_action).squeeze(1)
 
     reward = reward.unsqueeze(1).expand_as(target_next_q_dist)
     done = done.unsqueeze(1).expand_as(target_next_q_dist)
     support = support.unsqueeze(0).expand_as(target_next_q_dist)
-
     Tz = reward + args.gamma * support * (1 - done)
     Tz = Tz.clamp(min=args.Vmin, max=args.Vmax)
     b = (Tz - args.Vmin) / delta_z
     l = b.floor().long()
     u = b.ceil().long()
-
     target_dist = target_next_q_dist.clone().zero_()
     target_dist.view(-1).index_add_(0, (l + offset).view(-1), (target_next_q_dist * (u.float() - b)).view(-1))
     target_dist.view(-1).index_add_(0, (u + offset).view(-1), (target_next_q_dist * (b - l.float())).view(-1))
