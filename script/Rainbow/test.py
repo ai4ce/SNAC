@@ -36,7 +36,7 @@ def test(env, args, current_model, best_iou, writer, episode, datetime):
                 current_model.sample_noise()
 
             epsilon = 0.0
-            if args.env in ['1DDynamic', '2DDynamic']:
+            if args.env in [ '2DDynamic']:
                 action = current_model.act(torch.FloatTensor(state[:][0]).to(args.device),
                                            torch.FloatTensor(state[:][1]).to(args.device),
                                            epsilon)

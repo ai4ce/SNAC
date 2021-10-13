@@ -66,7 +66,7 @@ def train(env, args, writer, datetime):
             target_model.sample_noise()
 
         epsilon = epsilon_by_frame(frame_idx)
-        if args.env in ['1DDynamic', '2DDynamic']:
+        if args.env in ['2DDynamic']:
             action = current_model.act(torch.FloatTensor(state[:][0]).to(args.device),
                                        torch.FloatTensor(state[:][1]).to(args.device),
                                        epsilon)
@@ -138,10 +138,10 @@ def compute_td_loss(current_model, target_model, replay_buffer, optimizer, args,
 
     if not args.c51:
 
-        if args.env in ['1DDynamic', '2DDynamic']:
+        if args.env in ['2DDynamic']:
             q_values = current_model(torch.FloatTensor(np.float32(state[:][0])).to(args.device),
                                      torch.FloatTensor(np.float32(state[:][1])).to(args.device))
-        elif args.env == '3DDynamic':
+        elif args.env in ['1DDynamic','3DDynamic']:
             q_values = current_model(torch.FloatTensor(state).to(args.device))
         else:
             q_values = current_model(state)
@@ -150,10 +150,10 @@ def compute_td_loss(current_model, target_model, replay_buffer, optimizer, args,
         q_value = q_values.gather(1, action.unsqueeze(1)).squeeze(1)
 
         if args.double:
-            if args.env in ['1DDynamic', '2DDynamic']:
+            if args.env in ['2DDynamic']:
                 next_q_values = current_model(torch.FloatTensor(np.float32(next_state[:][0])).to(args.device),
                                          torch.FloatTensor(np.float32(next_state[:][1])).to(args.device))
-            elif args.env == '3DDynamic':
+            elif args.env in  ['1DDynamic','3DDynamic']:
                 next_q_values = current_model(torch.FloatTensor(next_state).to(args.device))
             else:
                 next_q_values = current_model(next_state)
@@ -170,10 +170,10 @@ def compute_td_loss(current_model, target_model, replay_buffer, optimizer, args,
         loss = (loss * weights).mean()
     
     else:
-        if args.env in ['1DDynamic', '2DDynamic']:
+        if args.env in ['2DDynamic']:
             q_dist = current_model(torch.FloatTensor(np.float32(state[:][0])).to(args.device),
                                    torch.FloatTensor(np.float32(state[:][1])).to(args.device))
-        elif args.env == '3DDynamic':
+        elif args.env in  ['1DDynamic','3DDynamic']:
             q_dist = current_model(torch.FloatTensor(state).to(args.device))
         else:
             q_dist = current_model(state)
@@ -198,12 +198,18 @@ def compute_td_loss(current_model, target_model, replay_buffer, optimizer, args,
 
 def projection_distribution(current_model, target_model, next_state, reward, done, support, offset, args):
     delta_z = float(args.Vmax - args.Vmin) / (args.num_atoms - 1)
-    target_next_q_dist = target_model(next_state)
+    if args.env in ['2DDynamic']:
+        target_next_q_dist = target_model(torch.FloatTensor(np.float32(next_state[:][0])).to(args.device),
+                                        torch.FloatTensor(np.float32(next_state[:][1])).to(args.device))
+    elif args.env in  ['1DDynamic','3DDynamic']:
+        target_next_q_dist = target_model(torch.FloatTensor(next_state).to(args.device))
+    else:
+        target_next_q_dist = target_model(next_state)
     if args.double:
-        if args.env in ['1DDynamic', '2DDynamic']:
+        if args.env in ['2DDynamic']:
             next_q_dist = current_model(torch.FloatTensor(np.float32(next_state[:][0])).to(args.device),
                                         torch.FloatTensor(np.float32(next_state[:][1])).to(args.device))
-        elif args.env == '3DDynamic':
+        elif args.env in  ['1DDynamic','3DDynamic']:
             next_q_dist = current_model(torch.FloatTensor(next_state).to(args.device))
         else:
             next_q_dist = current_model(next_state)
