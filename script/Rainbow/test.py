@@ -37,8 +37,7 @@ def test(env, args, current_model, best_iou, writer, episode, datetime):
 
             epsilon = 0.0
             if args.env in [ '2DDynamic']:
-                action = current_model.act(torch.FloatTensor(state[:][0]).to(args.device),
-                                           torch.FloatTensor(state[:][1]).to(args.device),
+                action = current_model.act(torch.FloatTensor(state).to(args.device),
                                            epsilon)
             else:
                 action = current_model.act(torch.FloatTensor(state).to(args.device), epsilon)
