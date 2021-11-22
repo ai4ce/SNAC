@@ -25,7 +25,7 @@ def set_seed(seeds):
     os.environ['PYTHONHASHSEED'] = str(seeds)
 
 ## hyper parameter
-seeds=5
+seeds=1
 set_seed(seeds)
 minibatch_size=2000
 Lr=0.00001
@@ -37,9 +37,9 @@ Update_traget_period=200
 UPDATE_FREQ=1
 INITIAL_EPSILON = 0.1
 FINAL_EPSILON = 0.0
-PALN_CHOICE=1  ##0: sin 1: Guassian 2:step
+PALN_CHOICE=2  ##0: sin 1: Guassian 2:step
 
-device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 PLAN_LIST=["sin","Gaussian","step"]
 PLAN_NAME=PLAN_LIST[PALN_CHOICE]
 OUT_FILE_NAME="DQN_1d_"+PLAN_NAME+"_lr"+str(Lr)+"_seed_"+str(seeds)
@@ -148,7 +148,6 @@ class DQN_AGNET():
         self.learn_step+=1
         train_loss=loss.item()
         return train_loss
-
 
 agent=DQN_AGNET(device)
 number_steps=0
