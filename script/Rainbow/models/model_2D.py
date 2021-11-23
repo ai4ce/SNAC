@@ -112,7 +112,7 @@ class DQNBase(nn.Module):
         if isinstance(self.env, Env1DStatic):
             return 65
         else:
-            return 50
+            return 115
         # return self.env.get_features() - 1 + 32
         # return self.features(torch.zeros(1, *self.input_shape)).view(1, -1).size(1)
     
@@ -371,22 +371,37 @@ class CategoricalDuelingDQN_Dynamic(CategoricalDQN_Dynamic):
             # nn.ReLU(),
             NoisyLinear(512, self.num_atoms, sigma_init)
         )
+        self.plan_features = nn.Sequential(
+            nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, stride=1),
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(32),
+
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2),
+            nn.BatchNorm2d(64),
+
+            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2),
+            nn.BatchNorm2d(128),
+
+            nn.Conv2d(in_channels=128, out_channels=64, kernel_size=3, stride=1)
+        )
 
     def forward(self, x):
-        # plan = plan.view(-1, 1, 20, 20)
-        # plan = self.plan_features(plan)
-        # plan = self.flatten(plan)
-
+        x = x.view(-1, 1, 451)
         input = x
+        plan = input[:, :, 51:].view(-1, 1, 20, 20)
+        plan = self.plan_features(plan)
+        plan = self.flatten(plan)
 
-        x = x[:, :, :x[0][0].shape[0] - 2].view(-1, 1, 7, 7)
+        x = x[:, :, :49].view(-1, 1, 7, 7)
         # x = self.features(x)
         x = self.flatten(x)
-        x = torch.cat([x, input[:, :, -2:-1].view(-1, 1)], axis=1)
-
+        x = torch.cat([x, input[:, :, 49:51].view(-1, 2),plan.view(-1, 64)], axis=1)
         advantage = self.advantage(x).view(-1, self.num_actions, self.num_atoms)
         value = self.value(x).view(-1, 1, self.num_atoms)
-
         x = value + advantage - advantage.mean(1, keepdim=True)
         x = self.softmax(x.view(-1, self.num_atoms))
         x = x.view(-1, self.num_actions, self.num_atoms)

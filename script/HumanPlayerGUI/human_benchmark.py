@@ -7,9 +7,9 @@ import tkinter.simpledialog
 import tkinter.ttk as ttk
 from tkinter import *
 
-from .arguments import get_args
-from .env.Env1D import Env1DStatic, Env1DDynamic
-from .env.Env2D import Env2DStatic, Env2DDynamic
+from arguments import get_args
+from env.Env1D import Env1DStatic, Env1DDynamic
+from env.Env2D import Env2DStatic, Env2DDynamic
 
 
 class HumanPlay:

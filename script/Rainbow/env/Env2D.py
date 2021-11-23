@@ -364,10 +364,9 @@ class Env2DDynamic(gym.Env):
 
         self.position_memory.append(initial_position)
         #
-        return [np.hstack((self.observation_(initial_position),
+        return np.hstack((self.observation_(initial_position),
                            np.array([[self.count_brick]]),
-                           np.array([[self.count_step]]))),
-                self.input_plan]
+                           np.array([[self.count_step]]),self.input_plan.reshape(1, -1)))
 
     def step(self, action):
         if self.uniform_step:
@@ -409,10 +408,9 @@ class Env2DDynamic(gym.Env):
                 if self.environment_memory[position[0],position[1]]>1:
                     self.environment_memory[position[0],position[1]]=1.0
 
-                observation = [np.hstack((self.observation_(position),
-                                          np.array([[self.count_brick]]),
-                                          np.array([[self.count_step]]))),
-                               self.input_plan]
+                observation = np.hstack((self.observation_(position),
+                           np.array([[self.count_brick]]),
+                           np.array([[self.count_step]]),self.input_plan.reshape(1, -1)))
 
                 reward = 0.0
 
@@ -426,18 +424,16 @@ class Env2DDynamic(gym.Env):
                 if self.environment_memory[position[0], position[1]] > 1.0:
                     self.environment_memory[position[0], position[1]] = 1.0
 
-                observation = [np.hstack((self.observation_(position),
-                                          np.array([[self.count_brick]]),
-                                          np.array([[self.count_step]]))),
-                               self.input_plan]
+                observation = np.hstack((self.observation_(position),
+                           np.array([[self.count_brick]]),
+                           np.array([[self.count_step]]),self.input_plan.reshape(1, -1)))
 
                 return observation, reward, done
 
         done = bool(self.count_step >= self.total_step)
-        observation = [np.hstack((self.observation_(position),
-                                  np.array([[self.count_brick]]),
-                                  np.array([[self.count_step]]))),
-                       self.input_plan]
+        observation = np.hstack((self.observation_(position),
+                           np.array([[self.count_brick]]),
+                           np.array([[self.count_step]]),self.input_plan.reshape(1, -1)))
         reward = 0
 
         return observation, reward, done
@@ -612,11 +608,9 @@ class Env2DDynamic_Validation(gym.Env):
 
         self.position_memory.append(initial_position)
         #
-        return [np.hstack((self.observation_(initial_position),
+        return np.hstack((self.observation_(initial_position),
                            np.array([[self.count_brick]]),
-                           np.array([[self.count_step]]))),
-                self.input_plan]
-
+                           np.array([[self.count_step]]),self.input_plan.reshape(1, -1)))
     def step(self, action):
         if self.uniform_step:
             self.step_size = 1
@@ -642,25 +636,20 @@ class Env2DDynamic_Validation(gym.Env):
             position = [self.position_memory[-1][0] - self.step_size, self.position_memory[-1][1]]
             position = self.clip_position(position)
             self.position_memory.append(position)
-
         #######    4   drop
         if action == 4:
             self.count_brick += 1
             position = self.position_memory[-1]
             self.position_memory.append(position)
-
             self.environment_memory[position[0], position[1]] += 1.0
-
             done = bool(self.count_brick > self.total_brick)
-
             if done:
                 if self.environment_memory[position[0],position[1]]>1:
                     self.environment_memory[position[0],position[1]]=1.0
 
-                observation = [np.hstack((self.observation_(position),
-                                          np.array([[self.count_brick]]),
-                                          np.array([[self.count_step]]))),
-                               self.input_plan]
+                observation = np.hstack((self.observation_(position),
+                           np.array([[self.count_brick]]),
+                           np.array([[self.count_step]]),self.input_plan.reshape(1, -1)))
 
                 reward = 0.0
 
@@ -674,18 +663,16 @@ class Env2DDynamic_Validation(gym.Env):
                 if self.environment_memory[position[0], position[1]] > 1.0:
                     self.environment_memory[position[0], position[1]] = 1.0
 
-                observation = [np.hstack((self.observation_(position),
-                                          np.array([[self.count_brick]]),
-                                          np.array([[self.count_step]]))),
-                               self.input_plan]
+                observation = np.hstack((self.observation_(position),
+                           np.array([[self.count_brick]]),
+                           np.array([[self.count_step]]),self.input_plan.reshape(1, -1)))
 
                 return observation, reward, done
 
         done = bool(self.count_step >= self.total_step)
-        observation = [np.hstack((self.observation_(position),
-                                  np.array([[self.count_brick]]),
-                                  np.array([[self.count_step]]))),
-                       self.input_plan]
+        observation = np.hstack((self.observation_(position),
+                           np.array([[self.count_brick]]),
+                           np.array([[self.count_step]]),self.input_plan.reshape(1, -1)))
 
         reward = 0
 
