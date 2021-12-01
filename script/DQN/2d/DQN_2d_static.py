@@ -43,7 +43,7 @@ PLAN_LIST=["dense","sparse"]
 PLAN_NAME=PLAN_LIST[PALN_CHOICE]
 OUT_FILE_NAME="DQN_2d_"+PLAN_NAME+"_lr"+str(Lr)+"_seed_"+str(seeds)
 print(OUT_FILE_NAME)
-log_path="./log/static/"+OUT_FILE_NAME+"/"
+log_path="/mnt/NAS/home/WenyuHan/SNAC/DQN/2D/log/static/"+OUT_FILE_NAME+"/"
 env = deep_mobile_printing_2d1r(plan_choose=PALN_CHOICE)
 if os.path.exists(log_path)==False:
     os.makedirs(log_path)
@@ -180,7 +180,7 @@ while True:
 agent.greedy_epsilon=INITIAL_EPSILON
 best_reward=0
 total_steps = 0
-writer = SummaryWriter('./DQN_2d_static')
+writer = SummaryWriter('/mnt/NAS/home/WenyuHan/SNAC/DQN/2D/DQN_2d_static')
 for episode in range(N_iteration):
     state = env.reset()
     print("total_brick",env.total_brick)

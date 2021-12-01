@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import sys
-sys.path.append('../../Env/3D/')
+sys.path.append('../../../Env/3D/')
 from DMP_simulator_3d_dynamic_triangle import deep_mobile_printing_3d1r
 import pickle
 import math
@@ -14,36 +14,53 @@ import time
 import os
 from collections import deque
 import random
+from tensorboardX import SummaryWriter
 
-log_path="./final_test/"
-env = deep_mobile_printing_3d1r(plan_choose=0)
-
-if os.path.exists(log_path)==False:
-    os.makedirs(log_path)
+def set_seed(seeds):
+    torch.manual_seed(seeds)
+    torch.cuda.manual_seed_all(seeds)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seeds)
+    random.seed(seeds)
+    os.environ['PYTHONHASHSEED'] = str(seeds)
 
 ## hyper parameter
+seeds=5
+set_seed(seeds)
 minibatch_size=2000
-Lr=0.001
+Lr=0.0001
 N_iteration=3000
 N_iteration_test=10
 alpha=0.9
 Replay_memory_size=50000
 Update_traget_period=200
 UPDATE_FREQ=1
+INITIAL_EPSILON = 0.1
+FINAL_EPSILON = 0.0
+PALN_CHOICE=1  ##0: dense 1: sparse
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+PLAN_LIST=["dense","sparse"]
+PLAN_NAME=PLAN_LIST[PALN_CHOICE]
+OUT_FILE_NAME="DQN_3d_"+PLAN_NAME+"_lr"+str(Lr)+"_seed_"+str(seeds)
+print(OUT_FILE_NAME)
+log_path="/mnt/NAS/home/WenyuHan/SNAC/DQN/3D/log/dynamic/"+OUT_FILE_NAME+"/"
+env = deep_mobile_printing_3d1r(plan_choose=PALN_CHOICE)
+if os.path.exists(log_path)==False:
+    os.makedirs(log_path)
 Action_dim=env.action_dim
 State_dim=env.state_dim
 plan_dim=env.plan_width
-INITIAL_EPSILON = 0.1
-FINAL_EPSILON = 0.0
 print("state_dim",State_dim)
 print("total_step",env.total_step)
 print("Action_dim",Action_dim)
 
 def get_and_init_FC_layer(din, dout):
     li = nn.Linear(din, dout)
-    li.weight.data.normal_(0, 0.1)
+    nn.init.xavier_uniform_(
+       li.weight.data, gain=nn.init.calculate_gain('relu'))
+    li.bias.data.fill_(0.)
     return li
-
 
 class Q_NET(nn.Module):
     def __init__(self, ):
@@ -147,10 +164,9 @@ class DQN_AGNET():
         loss.backward()
         self.optimizer.step()
         self.learn_step+=1
-        self.loss_his.append(loss.item())
+        train_loss=loss.item()
+        return train_loss
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# device = torch.device("cpu")
 agent=DQN_AGNET(device)
 number_steps=0
 while True:
@@ -174,10 +190,7 @@ while True:
 agent.greedy_epsilon=INITIAL_EPSILON
 best_reward=0
 total_steps = 0
-reward_history_train=[]
-reward_history_test=[]
-iou_history_train=[]
-iou_history_test=[]
+writer = SummaryWriter('/mnt/NAS/home/WenyuHan/SNAC/DQN/3D/DQN_3d_dynamic')
 
 for episode in range(N_iteration):
     state = env.reset()
@@ -193,7 +206,7 @@ for episode in range(N_iteration):
         agent.store_memory(prev_state, action, r, state_next[0],env_plan)
         reward_train += r
         if total_steps % UPDATE_FREQ == 0:
-            agent.learning_process()
+            train_loss=agent.learning_process()
         if done:
             secs = int(time.time() - start_time)
             mins = secs / 60
@@ -201,12 +214,10 @@ for episode in range(N_iteration):
             print(" | time in %d minutes, %d seconds\n" %(mins, secs))
             print('Epodise: ', episode,
                   '| Ep_reward: ', reward_train)
-            reward_history_train.append(reward_train)
         if done:
             break
         prev_state = state_next[0]
     train_iou=env.iou()
-    iou_history_train.append(train_iou)
     iou_test=0
     reward_test_total=0
     start_time_test = time.time()
@@ -225,6 +236,7 @@ for episode in range(N_iteration):
         reward_test_total+=reward_test
         iou_test+=env.iou()
     reward_test_total=reward_test_total/N_iteration_test
+    IOU_test_total= iou_test/N_iteration_test
     secs = int(time.time() - start_time_test)
     mins = secs / 60
     secs = secs % 60
@@ -232,9 +244,7 @@ for episode in range(N_iteration):
     print('Epodise: ', episode,
           '| Ep_reward_test:', reward_test_total)
     print('\nEpodise: ', episode,
-          '| Ep_IOU_test: ', iou_test/N_iteration_test)
-    reward_history_test.append(reward_test_total)
-    iou_history_test.append(iou_test/N_iteration_test)
+          '| Ep_IOU_test: ', IOU_test_total)
     if agent.greedy_epsilon > FINAL_EPSILON:
         agent.greedy_epsilon -= (INITIAL_EPSILON - FINAL_EPSILON)/N_iteration
         print("agent greedy_epsilon", agent.greedy_epsilon)
@@ -247,31 +257,17 @@ for episode in range(N_iteration):
         with open(log_path+"position.pickle", "wb") as fp: 
             pickle.dump(env.position_memory, fp)
         best_reward=reward_test_total
-
-with open(log_path+"brick_last.pickle", "wb") as fp: 
-    pickle.dump(env.brick_memory, fp)
-with open(log_path+"position_last.pickle", "wb") as fp: 
-    pickle.dump(env.position_memory, fp)
-with open(log_path+"reward_his_train.pickle", "wb") as fp: 
-    pickle.dump(reward_history_train, fp)
-with open(log_path+"reward_his_test.pickle", "wb") as fp: 
-    pickle.dump(reward_history_test, fp)
-with open(log_path+"loss.pickle", "wb") as fp: 
-    pickle.dump(agent.loss_his, fp)  
-with open(log_path+"iou_train_history.pickle", "wb") as fp: 
-    pickle.dump(iou_history_train, fp) 
-with open(log_path+"iou_test_history.pickle", "wb") as fp: 
-    pickle.dump(iou_history_test, fp)  
-
-    
-
-    
-
-
-
-
-
-
+    writer.add_scalars(OUT_FILE_NAME,
+                                   {'train_loss': train_loss,
+                                    'train_reward': reward_train,
+                                    'train_iou': train_iou,
+                                   'test_reward': reward_test_total,
+                                   'test_iou':IOU_test_total,}, episode)
+JSON_log_PATH="./JSON/"
+if os.path.exists(JSON_log_PATH)==False:
+    os.makedirs(JSON_log_PATH)                                   
+writer.export_scalars_to_json(JSON_log_PATH+OUT_FILE_NAME+".json")
+writer.close()
 
 
 

@@ -41,7 +41,7 @@ UPDATE_FREQ=1
 INITIAL_EPSILON = 0.1
 FINAL_EPSILON = 0.0
 PALN_CHOICE=1  ##0: dense 1: sparse
-device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 PLAN_LIST=["dense","sparse"]
 PLAN_NAME=PLAN_LIST[PALN_CHOICE]
 OUT_FILE_NAME="DQN_2d_"+PLAN_NAME+"_lr"+str(Lr)+"_seed_"+str(seeds)
@@ -69,7 +69,9 @@ def iou(environment_memory,environment_plan,HALF_WINDOW_SIZE,plan_height,plan_wi
 
 def get_and_init_FC_layer(din, dout):
     li = nn.Linear(din, dout)
-    li.weight.data.normal_(0, 0.1)
+    nn.init.xavier_uniform_(
+       li.weight.data, gain=nn.init.calculate_gain('relu'))
+    li.bias.data.fill_(0.)
     return li
 
 class Q_NET(nn.Module):

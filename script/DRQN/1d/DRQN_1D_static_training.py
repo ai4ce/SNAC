@@ -8,23 +8,22 @@ import random
 import time
 import os
 from collections import deque
-
-sys.path.append('1D/Static/')
+sys.path.append('../../../Env/1D/')
 from DMP_Env_1D_static import deep_mobile_printing_1d1r
+from tensorboardX import SummaryWriter
 
-# 0 Sin, 1 Gaussian, 2 Step
-plan_choose = 0
+def set_seed(seeds):
+    torch.manual_seed(seeds)
+    torch.cuda.manual_seed_all(seeds)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seeds)
+    random.seed(seeds)
+    os.environ['PYTHONHASHSEED'] = str(seeds)
 
-log_path = "./log/DRQN/1D/Static/plan_" + str(plan_choose) + "/"
-print('1D_Static')
-if os.path.exists(log_path) == False:
-    os.makedirs(log_path)
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-env = deep_mobile_printing_1d1r(plan_choose=plan_choose)
-
-print("device_using:", device)
-######################
 # hyper parameter
+seeds=3
+set_seed(seeds)
 minibatch_size = 64
 Lr = 0.0001
 N_iteration = 6000
@@ -32,30 +31,38 @@ N_iteration_test = 10
 alpha = 0.9
 Replay_memory_size = 1000
 Update_traget_period = 200
-Action_dim = env.action_dim
-State_dim = env.state_dim
 hidden_state_dim = 256
 Time_step = 20
 UPDATE_FREQ = 5
 INITIAL_EPSILON = 0.1
 FINAL_EPSILON = 0.0
 ######################
+PALN_CHOICE=0  # 0 Sin, 1 Gaussian, 2 Step
+device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+PLAN_LIST=["sin","Gaussian","step"]
+PLAN_NAME=PLAN_LIST[PALN_CHOICE]
+OUT_FILE_NAME="DRQN_1d_"+PLAN_NAME+"_lr"+str(Lr)+"_seed_"+str(seeds)
+print(OUT_FILE_NAME)
+log_path="/mnt/NAS/home/WenyuHan/SNAC/DRQN/1D/log/static/"+OUT_FILE_NAME+"/"
+env = deep_mobile_printing_1d1r(plan_choose=PALN_CHOICE)
 
-print("State_dimension", State_dim)
-print("plan_width", env.plan_width)
-print("^^^^^^^^^^^^^^^^^^^^^^^^^^")
-
+Action_dim=env.action_dim
+State_dim=env.state_dim
+print("state_dim",State_dim)
+print("total_step",env.total_step)
+if os.path.exists(log_path) == False:
+    os.makedirs(log_path)
 
 def get_and_init_FC_layer(din, dout):
     li = nn.Linear(din, dout)
-    li.weight.data.normal_(0, 0.1)
+    nn.init.xavier_uniform_(
+       li.weight.data, gain=nn.init.calculate_gain('relu'))
+    li.bias.data.fill_(0.)
     return li
-
 
 class Q_NET(nn.Module):
     def __init__(self, out_size, hidden_size):
         super(Q_NET, self).__init__()
-
         self.out_size = out_size
         self.hidden_size = hidden_size
         self.fc_1 = get_and_init_FC_layer(State_dim, 64)
@@ -65,7 +72,6 @@ class Q_NET(nn.Module):
         self.adv = get_and_init_FC_layer(hidden_size, self.out_size)
         self.val = get_and_init_FC_layer(hidden_size, 1)
         self.relu = nn.ReLU()
-
     def forward(self, x, bsize, time_step, hidden_state, cell_state):
         x = x.view(bsize * time_step, State_dim)
         x = self.fc_1(x)
@@ -92,14 +98,11 @@ class Q_NET(nn.Module):
 
 
 class Memory():
-
     def __init__(self, memsize):
         self.memsize = memsize
         self.memory = deque(maxlen=self.memsize)
-
     def add_episode(self, epsiode):
         self.memory.append(epsiode)
-
     def get_batch(self, bsize, time_step):
         sampled_epsiodes = random.sample(self.memory, bsize)
         batch = []
@@ -124,10 +127,8 @@ class DQN_AGNET():
         self.replaymemory = Memory(Replay_memory_size)
 
     def choose_action(self, s, hidden_state, cell_state):
-
         state = torch.from_numpy(s).float().to(self.device)
         choose = np.random.uniform()
-
         if choose<=self.greedy_epsilon:
             model_out = self.Eval_net.forward(state,bsize=1,time_step=1,hidden_state=hidden_state,cell_state=cell_state)
             action=np.random.randint(0, Action_dim)
@@ -139,18 +140,14 @@ class DQN_AGNET():
             action = int(torch.argmax(out[0]))
             hidden_state = model_out[1][0]
             cell_state = model_out[1][1]
-
         return action, hidden_state, cell_state
-
     def learning_process(self):
         self.optimizer.zero_grad()
         self.Eval_net.train()
         if self.learn_step % Update_traget_period == 0:
             self.Target_net.load_state_dict(self.Eval_net.state_dict())
-
         hidden_batch, cell_batch = self.Eval_net.init_hidden_states(bsize=minibatch_size)
         batch = self.replaymemory.get_batch(bsize=minibatch_size, time_step=Time_step)
-
         current_states = []
         acts = []
         rewards = []
@@ -170,36 +167,29 @@ class DQN_AGNET():
         acts = np.array(acts)
         rewards = np.array(rewards)
         next_states = np.array(next_states)
-
         torch_current_states = torch.from_numpy(current_states).float().to(self.device)
         torch_acts = torch.from_numpy(acts).long().to(self.device)
         torch_rewards = torch.from_numpy(rewards).float().to(self.device)
         torch_next_states = torch.from_numpy(next_states).float().to(self.device)
-
         Q_s, _ = self.Eval_net.forward(torch_current_states, bsize=minibatch_size, time_step=Time_step,
                                        hidden_state=hidden_batch, cell_state=cell_batch)
-
         Q_s_a = Q_s.gather(dim=1, index=torch_acts[:, Time_step - 1].unsqueeze(dim=1)).squeeze(dim=1)
-
         Q_next, _ = self.Target_net.forward(torch_next_states, bsize=minibatch_size, time_step=Time_step,
                                             hidden_state=hidden_batch, cell_state=cell_batch)
         Q_next_max, __ = Q_next.detach().max(dim=1)
         target_values = torch_rewards[:, Time_step - 1] + (alpha * Q_next_max)
-
         loss = self.loss(Q_s_a, target_values)
-
         loss.backward()
         self.optimizer.step()
         self.learn_step += 1
-        self.loss_his.append(loss.item())
-
+        train_loss=loss.item()
+        return train_loss
 
 #### initial fill the replaymemory
 agent = DQN_AGNET(device)
 for i in range(0, Replay_memory_size):
     prev_state = env.reset()
     local_memory = []
-
     while True:
         action = np.random.randint(0, Action_dim)
         next_state, reward, done = env.step(action)
@@ -208,17 +198,11 @@ for i in range(0, Replay_memory_size):
         if done:
             break
     agent.replaymemory.add_episode(local_memory)
-
 agent.greedy_epsilon = INITIAL_EPSILON
-
 print("agent greedy_epsilon", agent.greedy_epsilon)
-
 best_reward = -500
 total_steps = 0
-reward_history_train = []
-reward_history_test = []
-iou_history_train = []
-iou_history_test = []
+writer = SummaryWriter('/mnt/NAS/home/WenyuHan/SNAC/DRQN/1D/DRQN_1d_static')
 
 for episode in range(N_iteration):
     state = env.reset()
@@ -228,29 +212,23 @@ for episode in range(N_iteration):
     start_time = time.time()
     local_memory = []
     hidden_state, cell_state = agent.Eval_net.init_hidden_states(bsize=1)
-
     while True:
-
         total_steps += 1
         action, hidden_state_next, cell_state_next = agent.choose_action(state, hidden_state, cell_state)
         state_next, r, done = env.step(action)
         local_memory.append((state, action, r, state_next))
-
         reward_train += r
         if total_steps % UPDATE_FREQ == 0:
-            agent.learning_process()
-
+            train_loss=agent.learning_process()
         if done:
             secs = int(time.time() - start_time)
             mins = secs / 60
             secs = secs % 60
-            reward_history_train.append(reward_train)
             break
         state = state_next
         hidden_state, cell_state = hidden_state_next, cell_state_next
     agent.replaymemory.add_episode(local_memory)
-    iou_history_train.append(env.iou())
-
+    train_iou=env.iou()
     ############ test agent
     iou_test = 0
     reward_test_total = 0
@@ -258,31 +236,24 @@ for episode in range(N_iteration):
         state = env.reset()
         reward_test = 0
         hidden_state, cell_state = agent.Eval_net.init_hidden_states(bsize=1)
-
         while True:
-
             action, hidden_state_next, cell_state_next = agent.choose_action(state, hidden_state, cell_state)
             state_next, r, done = env.step(action)
             reward_test += r
-
             if done:
                 break
             state = state_next
             hidden_state, cell_state = hidden_state_next, cell_state_next
-
         reward_test_total += reward_test
         iou_test += env.iou()
     reward_test_total = reward_test_total / N_iteration_test
+    IOU_test_total= iou_test/N_iteration_test
     secs = int(time.time() - start_time)
     mins = secs / 60
     secs = secs % 60
-
     print('Epodise: ', episode,
-          '| Ep_reward_test:', reward_test_total, '| Ep_IOU_test: ', iou_test / N_iteration_test)
+          '| Ep_reward_test:', reward_test_total, '| Ep_IOU_test: ', IOU_test_total)
     print(" | time in %d minutes, %d seconds\n" % (mins, secs))
-
-    reward_history_test.append(reward_test_total)
-    iou_history_test.append(iou_test / N_iteration_test)
 
     if agent.greedy_epsilon > FINAL_EPSILON:
         agent.greedy_epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / N_iteration
@@ -290,15 +261,14 @@ for episode in range(N_iteration):
         torch.save(agent.Eval_net.state_dict(), log_path + 'Eval_net_episode_%d.pth' % (episode))
         torch.save(agent.Target_net.state_dict(), log_path + 'Target_net_episode_%d.pth' % (episode))
         best_reward = reward_test_total
-
-with open(log_path + "reward_his_train.pickle", "wb") as fp:
-    pickle.dump(reward_history_train, fp)
-with open(log_path + "reward_his_test.pickle", "wb") as fp:
-    pickle.dump(reward_history_test, fp)
-with open(log_path + "loss.pickle", "wb") as fp:
-    pickle.dump(agent.loss_his, fp)
-
-with open(log_path + "iou_train_history.pickle", "wb") as fp:
-    pickle.dump(iou_history_train, fp)
-with open(log_path + "iou_test_history.pickle", "wb") as fp:
-    pickle.dump(iou_history_test, fp)
+    writer.add_scalars(OUT_FILE_NAME,
+                                   {'train_loss': train_loss,
+                                    'train_reward': reward_train,
+                                    'train_iou': train_iou,
+                                   'test_reward': reward_test_total,
+                                   'test_iou':IOU_test_total,}, episode)
+JSON_log_PATH="./JSON/"
+if os.path.exists(JSON_log_PATH)==False:
+    os.makedirs(JSON_log_PATH)                                   
+writer.export_scalars_to_json(JSON_log_PATH+OUT_FILE_NAME+".json")
+writer.close()
