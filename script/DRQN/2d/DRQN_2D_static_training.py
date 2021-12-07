@@ -22,10 +22,10 @@ def set_seed(seeds):
 
 ######################
 # hyper parameter
-seeds=1
+seeds=5
 set_seed(seeds)
 minibatch_size=64
-Lr=0.00001
+Lr=0.0001
 N_iteration=10000
 N_iteration_test=10
 alpha=0.9
@@ -37,8 +37,8 @@ UPDATE_FREQ=5
 INITIAL_EPSILON = 0.2
 FINAL_EPSILON = 0.0
 ######################
-PALN_CHOICE=0  # 0 dense 1 sparse
-device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+PALN_CHOICE=1  # 0 dense 1 sparse
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 PLAN_LIST=["dense","sparse"]
 PLAN_NAME=PLAN_LIST[PALN_CHOICE]
 OUT_FILE_NAME="DRQN_2d_"+PLAN_NAME+"_lr"+str(Lr)+"_seed_"+str(seeds)
