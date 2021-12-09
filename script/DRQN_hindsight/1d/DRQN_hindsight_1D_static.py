@@ -8,6 +8,7 @@ import random
 import time
 import os
 from collections import deque
+from tensorboardX import SummaryWriter
 sys.path.append('../../../Env/1D/')
 from DMP_Env_1D_static import deep_mobile_printing_1d1r
 from DMP_Env_1D_static_hindsight_replay import deep_mobile_printing_1d1r_hindsight
@@ -38,8 +39,8 @@ FINAL_EPSILON = 0.0
 use_hindsight=True
 ######################
 # 0 Sin, 1 Gaussian, 2 Step
-PALN_CHOICE=2  # 0 Sin, 1 Gaussian, 2 Step
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+PALN_CHOICE=1  # 0 Sin, 1 Gaussian, 2 Step
+device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 PLAN_LIST=["sin","Gaussian","step"]
 PLAN_NAME=PLAN_LIST[PALN_CHOICE]
 OUT_FILE_NAME="DRQN_hindsight_1d_"+PLAN_NAME+"_lr"+str(Lr)+"_seed_"+str(seeds)
@@ -201,7 +202,7 @@ agent.greedy_epsilon = INITIAL_EPSILON
 print("agent greedy_epsilon", agent.greedy_epsilon)
 best_reward = -500
 total_steps = 0
-writer = SummaryWriter('/mnt/NAS/home/WenyuHan/SNAC/DRQN_hindsight/1D/DRQN_hindsight_1d_static')
+writer = SummaryWriter('/mnt/NAS/home/WenyuHan/SNAC/DRQN_Hindsight/1D/DRQN_hindsight_1d_static')
 
 for episode in range(N_iteration):
     state = env.reset()
