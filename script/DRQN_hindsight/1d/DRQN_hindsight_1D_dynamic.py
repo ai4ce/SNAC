@@ -23,7 +23,7 @@ def set_seed(seeds):
     os.environ['PYTHONHASHSEED'] = str(seeds)
 ######################
 # hyper parameter
-seeds=4
+seeds=5
 set_seed(seeds)
 minibatch_size = 64
 Lr = 0.0001
@@ -39,7 +39,7 @@ INITIAL_EPSILON = 0.1
 FINAL_EPSILON = 0.0
 use_hindsight=True
 ######################
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 OUT_FILE_NAME="DRQN_hindsight_1d_"+"sin"+"_lr"+str(Lr)+"_seed_"+str(seeds)
 print(OUT_FILE_NAME)
 log_path="/mnt/NAS/home/WenyuHan/SNAC/DRQN_Hindsight/1D/log/dynamic/"+OUT_FILE_NAME+"/"
