@@ -21,7 +21,7 @@ def set_seed(seeds):
     os.environ['PYTHONHASHSEED'] = str(seeds)
 ######################
 # hyper parameter
-seeds=5
+seeds=4
 set_seed(seeds)
 minibatch_size=64
 Lr=0.00001
@@ -32,12 +32,12 @@ Replay_memory_size=1000
 Update_traget_period=200
 hidden_state_dim=256
 Time_step=20
-UPDATE_FREQ=5
+UPDATE_FREQ=1
 INITIAL_EPSILON = 0.2
 FINAL_EPSILON = 0.0
 ######################
 # plan_choose: 0 Dense circle, 1 Sparse circle
-PALN_CHOICE=0  # 0 dense 1 sparse
+PALN_CHOICE=1  # 0 dense 1 sparse
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 PLAN_LIST=["dense","sparse"]
 PLAN_NAME=PLAN_LIST[PALN_CHOICE]
