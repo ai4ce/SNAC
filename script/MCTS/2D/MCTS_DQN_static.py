@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jun 27 18:19:21 2021
-@author: hanwenyu
-"""
 import torch
 import torch.nn as nn
 import numpy as np
@@ -18,10 +12,19 @@ sys.path.append('../utils')
 from DMP_ENV_2D_static_MCTS import deep_mobile_printing_2d1r_MCTS
 import uct
 from tensorboardX import SummaryWriter
-
+def set_seed(seeds):
+    torch.manual_seed(seeds)
+    torch.cuda.manual_seed_all(seeds)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seeds)
+    random.seed(seeds)
+    os.environ['PYTHONHASHSEED'] = str(seeds)
 ## hyper parameter
+seeds=2
+set_seed(seeds)
 minibatch_size=2000
-Lr=0.0005
+Lr=0.0001
 N_iteration=3000
 N_iteration_test=3
 alpha=0.9
@@ -33,18 +36,15 @@ ROLLOUT=20
 UCB_CONSTANT=0.5
 INITIAL_EPSILON = 0.1
 FINAL_EPSILON = 0.0
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-# device = torch.device("cpu")
-
+device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 PLAN_LIST=["densecircle","sparsecircle"]
 PLAN_NAME=PLAN_LIST[PALN_CHOICE]
-OUT_FILE_NAME="DQN_2d_"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)
+OUT_FILE_NAME="DQN_2d_"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)+"_seed_"+str(seeds)
 print(OUT_FILE_NAME)
-log_path="./log/static/"+OUT_FILE_NAME+"/"
+log_path="/mnt/NAS/home/WenyuHan/SNAC/DQN_MCTS/2D/log/static/"+OUT_FILE_NAME+"/"
 env = deep_mobile_printing_2d1r_MCTS(plan_choose=PALN_CHOICE)
 if os.path.exists(log_path)==False:
     os.makedirs(log_path)
-
 Action_dim=env.action_dim
 State_dim=env.state_dim
 plan_dim=env.plan_width
@@ -175,7 +175,7 @@ while True:
 agent.greedy_epsilon=INITIAL_EPSILON
 best_reward=0
 total_steps = 0
-writer = SummaryWriter('./DQN_2d_static')
+writer = SummaryWriter('/mnt/NAS/home/WenyuHan/SNAC/DQN_MCTS/2D/DQN_MCTS_2d_static')
 for episode in range(N_iteration):
     state, obs = env.reset()    
     reward_train = 0

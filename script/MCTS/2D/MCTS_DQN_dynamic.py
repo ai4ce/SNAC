@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jun 27 18:19:21 2021
-
-@author: hanwenyu
-"""
 import torch
 import torch.nn as nn
 import numpy as np
@@ -19,29 +12,37 @@ sys.path.append('../utils/')
 from DMP_ENV_2D_dynamic_MCTS import deep_mobile_printing_2d1r
 import uct_dynamic_inputplan
 from tensorboardX import SummaryWriter
-
+def set_seed(seeds):
+    torch.manual_seed(seeds)
+    torch.cuda.manual_seed_all(seeds)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seeds)
+    random.seed(seeds)
+    os.environ['PYTHONHASHSEED'] = str(seeds)
 ## hyper parameter
+seeds=2
+set_seed(seeds)
 minibatch_size=2000
-Lr=0.00001
+Lr=0.0001
 N_iteration=3000
 N_iteration_test=3
 alpha=0.9
 Replay_memory_size=50000
 Update_traget_period=200
 UPDATE_FREQ=1
-PALN_CHOICE=1  ##0: dense 1: sparse
+PALN_CHOICE=0  ##0: dense 1: sparse
 ROLLOUT=20
 UCB_CONSTANT=0.5
 INITIAL_EPSILON = 0.1
 FINAL_EPSILON = 0.0
-device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
 PLAN_LIST=["densetriangle","sparsetriangle"]
 PLAN_NAME=PLAN_LIST[PALN_CHOICE]
-OUT_FILE_NAME="DQN_2d_"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)
+OUT_FILE_NAME="DQN_2d_"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)+"_seed_"+str(seeds)
 print(OUT_FILE_NAME)
-
-log_path="./log/dynamic/"+OUT_FILE_NAME+"/"
+log_path="/mnt/NAS/home/WenyuHan/SNAC/DQN_MCTS/2D/log/dynamic/"+OUT_FILE_NAME+"/"
 env = deep_mobile_printing_2d1r(plan_choose=PALN_CHOICE)
 if os.path.exists(log_path)==False:
     os.makedirs(log_path)
@@ -191,7 +192,7 @@ while True:
 agent.greedy_epsilon=INITIAL_EPSILON
 best_reward=0
 total_steps = 0
-writer = SummaryWriter('./DQN_2d_dynamic')
+writer = SummaryWriter('/mnt/NAS/home/WenyuHan/SNAC/DQN_MCTS/2D/DQN_MCTS_2d_dynamic')
 for episode in range(N_iteration):
     state, obs = env.reset()    
     reward_train = 0
@@ -244,7 +245,7 @@ for episode in range(N_iteration):
     print('Epodise: ', episode,
           '| Ep_reward_test:', reward_test_total)
     print('\nEpodise: ', episode,
-          '| Ep_IOU_test: ', iou_test/N_iteration_test)
+          '| Ep_IOU_test: ', IOU_test_total)
     if IOU_test_total >= best_reward:
         torch.save(agent.Eval_net.state_dict(), log_path+'Eval_net_episode_%d.pth' % (episode))
         torch.save(agent.Target_net.state_dict(), log_path+'Target_net_episode_%d.pth' % (episode))
