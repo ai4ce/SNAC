@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jun 27 18:19:21 2021
-
-@author: hanwenyu
-"""
 import torch
 import torch.nn as nn
 import numpy as np
@@ -19,8 +12,17 @@ sys.path.append('../utils/')
 from DMP_simulator_3d_dynamic_triangle_MCTS import deep_mobile_printing_3d1r
 import uct_dynamic_inputplan
 from tensorboardX import SummaryWriter
-
+def set_seed(seeds):
+    torch.manual_seed(seeds)
+    torch.cuda.manual_seed_all(seeds)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seeds)
+    random.seed(seeds)
+    os.environ['PYTHONHASHSEED'] = str(seeds)
 ## hyper parameter
+seeds=1
+set_seed(seeds)
 minibatch_size=2000
 Lr=0.00001
 N_iteration=3000
@@ -38,7 +40,7 @@ device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
 PLAN_LIST=["densetriangle","sparsetriangle"]
 PLAN_NAME=PLAN_LIST[PALN_CHOICE]
-OUT_FILE_NAME="DQN_3d_"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)
+OUT_FILE_NAME="DQN_3d_"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)+"_seed_"+str(seeds)
 print(OUT_FILE_NAME)
 log_path="./log/dynamic/"+OUT_FILE_NAME+"/"
 env = deep_mobile_printing_3d1r(plan_choose=PALN_CHOICE)

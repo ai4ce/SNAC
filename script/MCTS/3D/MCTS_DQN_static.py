@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jun 27 18:19:21 2021
-
-@author: hanwenyu
-"""
-
 import torch
 import torch.nn as nn
 import numpy as np
@@ -20,8 +12,17 @@ sys.path.append('../utils')
 from DMP_simulator_3d_static_circle_MCTS import deep_mobile_printing_3d1r
 import uct
 from tensorboardX import SummaryWriter
-
+def set_seed(seeds):
+    torch.manual_seed(seeds)
+    torch.cuda.manual_seed_all(seeds)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seeds)
+    random.seed(seeds)
+    os.environ['PYTHONHASHSEED'] = str(seeds)
 ## hyper parameter
+seeds=5
+set_seed(seeds)
 minibatch_size=2000
 Lr=0.0001
 N_iteration=3000
@@ -32,22 +33,18 @@ Update_traget_period=200
 UPDATE_FREQ=1
 INITIAL_EPSILON = 0.1
 FINAL_EPSILON = 0.0
-PALN_CHOICE=1  ##0: dense 1: sparse
+PALN_CHOICE=0  ##0: dense 1: sparse
 ROLLOUT=20
 UCB_CONSTANT=0.5
-INITIAL_EPSILON = 0.1
-FINAL_EPSILON = 0.0
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-# device = torch.device("cpu")
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 PLAN_LIST=["densecircle","sparsecircle"]
 PLAN_NAME=PLAN_LIST[PALN_CHOICE]
-OUT_FILE_NAME="DQN_3d_"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)
+OUT_FILE_NAME="DQN_3d_"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)+"_seed_"+str(seeds)
 print(OUT_FILE_NAME)
-log_path="./log/static/"+OUT_FILE_NAME+"/"
+log_path="/mnt/NAS/home/WenyuHan/SNAC/DQN_MCTS/3D/log/static/"+OUT_FILE_NAME+"/"
 env = deep_mobile_printing_3d1r(plan_choose=PALN_CHOICE)
 if os.path.exists(log_path)==False:
     os.makedirs(log_path)
-
 Action_dim=env.action_dim
 State_dim=env.state_dim
 plan_dim=env.plan_width
@@ -149,7 +146,6 @@ class DQN_AGNET():
         train_loss=loss.item()
         return train_loss
 
-# device = torch.device("cpu")
 agent=DQN_AGNET(device)
 number_steps=0
 while True:
@@ -170,7 +166,7 @@ while True:
 agent.greedy_epsilon=INITIAL_EPSILON
 best_reward=0
 total_steps = 0
-writer = SummaryWriter('./DQN_3d_static')
+writer = SummaryWriter('/mnt/NAS/home/WenyuHan/SNAC/DQN_MCTS/3D/DQN_MCTS_3d_static')
 
 for episode in range(N_iteration):
     state, obs = env.reset()
