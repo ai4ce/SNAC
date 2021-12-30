@@ -3,7 +3,9 @@ import math
 import numpy as np
 from abc import ABCMeta
 import torch
-from nn_builder.pytorch.NN import NN
+import sys
+# sys.path.append('../../agents/')
+# from .NN import NN
 from torch.distributions import Categorical, normal, MultivariateNormal
 
 def abstract(cls):

@@ -7,8 +7,9 @@ import numpy as np
 import torch
 import time
 import pickle
+# sys.path.append('./nn_builder')
 # import tensorflow as tf
-from nn_builder.pytorch.NN import NN
+from .NN import NN
 # from tensorboardX import SummaryWriter
 from torch.optim import optimizer
 
@@ -20,6 +21,7 @@ class Base_Agent(object):
         # if self.debug_mode: self.tensorboard = SummaryWriter()
         self.config = config
         self.set_random_seeds(config.seed)
+        print("config.seed",config.seed)
         self.environment = config.environment
         self.environment_title = self.get_environment_title()
         self.action_types = "DISCRETE"
@@ -39,7 +41,7 @@ class Base_Agent(object):
         self.max_rolling_score_seen = float("-inf")
         self.max_episode_score_seen = float("-inf")
         self.episode_number = 0
-        self.device = "cuda:0" if config.use_GPU else "cpu"
+        self.device = config.GPU if config.use_GPU else "cpu"
         self.visualise_results_boolean = config.visualise_individual_results
         self.global_step_number = 0
         self.turn_off_exploration = False
@@ -209,9 +211,9 @@ class Base_Agent(object):
         time_taken = time.time() - start
         if show_whether_achieved_goal: self.show_whether_achieved_goal()
         if self.config.save_model: self.locally_save_policy()
-        with open("results/data_and_graphs/reward_his_test.pickle", "wb") as fp: 
+        with open(self.config.save_model_path+"reward_his_test.pickle", "wb") as fp: 
             pickle.dump(self.reward_history_test, fp)
-        with open("results/data_and_graphs/iou_test_history.pickle", "wb") as fp: 
+        with open(self.config.save_model_path+"iou_test_history.pickle", "wb") as fp: 
             pickle.dump(self.iou_history_test, fp)   
 
         return self.game_full_episode_scores, self.rolling_results, time_taken
@@ -238,7 +240,7 @@ class Base_Agent(object):
         """Updates the best episode result seen so far"""
         if self.game_full_episode_scores[-1] > self.max_episode_score_seen:
             self.max_episode_score_seen = self.game_full_episode_scores[-1]
-            torch.save(self.actor_local.state_dict(), 'results/data_and_graphs/Actor_net_episode_%d.pth' % (self.episode_number))
+            torch.save(self.actor_local.state_dict(), self.config.save_model_path+'Actor_net_episode_%d.pth' % (self.episode_number))
 
         if self.rolling_results[-1] > self.max_rolling_score_seen:
             if len(self.rolling_results) > self.rolling_score_window:

@@ -12,11 +12,13 @@ class Config(object):
         self.visualise_individual_results = None
         self.hyperparameters = None
         self.use_GPU = None
+        self.GPU = "cuda:0"
         self.overwrite_existing_results_file = None
         self.save_model = False
         self.standard_deviation_results = 1.0
         self.randomise_random_seed = True
         self.show_solution_score = False
         self.debug_mode = False
+        self.save_model_path = None 
 
 

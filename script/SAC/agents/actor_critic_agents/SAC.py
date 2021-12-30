@@ -364,81 +364,81 @@ class SAC(Base_Agent):
 
 
             
-            ########################2d dynamic test################################
-            print("Testing")
+            # ########################2d dynamic test################################
+            # print("Testing")
 
             
-            print(f"PLAN = {self.environment.plan_choose}")
-            iou_all_average = 0
-            iou_all_min = 1
-            for test_set in range(10):
-                test_set = 6
-                env = deep_mobile_printing_2d1r(plan_choose=self.environment.plan_choose, test_set=test_set)
+            # print(f"PLAN = {self.environment.plan_choose}")
+            # iou_all_average = 0
+            # iou_all_min = 1
+            # for test_set in range(10):
+            #     test_set = 6
+            #     env = deep_mobile_printing_2d1r(plan_choose=self.environment.plan_choose, test_set=test_set)
 
-                def iou(environment_memory,environment_plan,HALF_WINDOW_SIZE,plan_height,plan_width):
-                    component1=environment_plan[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
-                                        HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
-                    component2=environment_memory[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
-                                        HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
-                    overlap = component1*component2 # Logical AND
-                    union = component1 + component2 # Logical OR
-                    IOU = overlap.sum()/float(union.sum())
-                    return IOU
+            #     def iou(environment_memory,environment_plan,HALF_WINDOW_SIZE,plan_height,plan_width):
+            #         component1=environment_plan[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
+            #                             HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
+            #         component2=environment_memory[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
+            #                             HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
+            #         overlap = component1*component2 # Logical AND
+            #         union = component1 + component2 # Logical OR
+            #         IOU = overlap.sum()/float(union.sum())
+            #         return IOU
 
-                print(test_set)
-                N_iteration_test = 200
-                best_iou = 0
-                iou_test_total = 0
-                iou_min = 1
-                reward_test_total = 0
-                start_time_test = time.time()
+            #     print(test_set)
+            #     N_iteration_test = 200
+            #     best_iou = 0
+            #     iou_test_total = 0
+            #     iou_min = 1
+            #     reward_test_total = 0
+            #     start_time_test = time.time()
 
-                fig = plt.figure(figsize=(5, 5))
-                ax = fig.add_subplot(1, 1, 1)
-                for ep in range(N_iteration_test):
-                    obs = env.reset()
-                    reward_test = 0
-                    self.state = obs
-                    while True:
-                        self.action = self.pick_action(eval_ep)
-                        self.conduct_action(self.action)
-                        # action, _ = test_agent.predict(obs)
-                        obs, r, done, info = env.step(self.action)
-                        self.state = obs
-                        reward_test += r
-                        if done:
-                            break
+            #     fig = plt.figure(figsize=(5, 5))
+            #     ax = fig.add_subplot(1, 1, 1)
+            #     for ep in range(N_iteration_test):
+            #         obs = env.reset()
+            #         reward_test = 0
+            #         self.state = obs
+            #         while True:
+            #             self.action = self.pick_action(eval_ep)
+            #             self.conduct_action(self.action)
+            #             # action, _ = test_agent.predict(obs)
+            #             obs, r, done, info = env.step(self.action)
+            #             self.state = obs
+            #             reward_test += r
+            #             if done:
+            #                 break
 
-                    iou_test = iou(env.environment_memory,env.plan,env.HALF_WINDOW_SIZE,env.plan_height,env.plan_width)
-                    iou_min = min(iou_min, iou_test)
+            #         iou_test = iou(env.environment_memory,env.plan,env.HALF_WINDOW_SIZE,env.plan_height,env.plan_width)
+            #         iou_min = min(iou_min, iou_test)
 
-                    if iou_test > best_iou:
-                        best_iou = iou_test
-                        best_plan = env.plan
-                        best_tb = env.total_brick
-                        env.render(ax)
-                        save_path = "plots/"
-                        plt.savefig(save_path+"SAC_Plan"+str(test_set)+'_'+str(self.environment.plan_choose)+'_good.png')
-                    iou_test_total += iou_test
-                    reward_test_total += reward_test
+            #         if iou_test > best_iou:
+            #             best_iou = iou_test
+            #             best_plan = env.plan
+            #             best_tb = env.total_brick
+            #             env.render(ax)
+            #             save_path = "plots/"
+            #             plt.savefig(save_path+"SAC_Plan"+str(test_set)+'_'+str(self.environment.plan_choose)+'_good.png')
+            #         iou_test_total += iou_test
+            #         reward_test_total += reward_test
 
-                reward_test_total = reward_test_total / N_iteration_test
-                iou_test_total = iou_test_total / N_iteration_test
-                secs = int(time.time() - start_time_test)
-                mins = secs // 60
-                secs = secs % 60
-                print(f"time = {mins} min {secs} sec")
-                print(f"iou = {iou_test_total}")
-                print(f"reward_test = {reward_test_total}")
-                env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
-                iou_all_average += iou_test_total
-                iou_all_min = min(iou_min,iou_all_min)
-                save_path = "plots/"
-                plt.savefig(save_path+"SAC_Plan"+str(test_set)+'_'+str(self.environment.plan_choose)+'_summary.png')
+            #     reward_test_total = reward_test_total / N_iteration_test
+            #     iou_test_total = iou_test_total / N_iteration_test
+            #     secs = int(time.time() - start_time_test)
+            #     mins = secs // 60
+            #     secs = secs % 60
+            #     print(f"time = {mins} min {secs} sec")
+            #     print(f"iou = {iou_test_total}")
+            #     print(f"reward_test = {reward_test_total}")
+            #     env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
+            #     iou_all_average += iou_test_total
+            #     iou_all_min = min(iou_min,iou_all_min)
+            #     save_path = "plots/"
+            #     plt.savefig(save_path+"SAC_Plan"+str(test_set)+'_'+str(self.environment.plan_choose)+'_summary.png')
 
-            iou_all_average = iou_all_average/10
-            print('iou_all_average',iou_all_average)
-            print('iou_all_min',iou_all_min)
+            # iou_all_average = iou_all_average/10
+            # print('iou_all_average',iou_all_average)
+            # print('iou_all_min',iou_all_min)
 
 
 
@@ -630,13 +630,13 @@ class SAC(Base_Agent):
 
 
             
-            '''
+        
             ########################1d static test################################
             plan = self.environment.plan_choose
 
             print(f"Testing plan {plan}")
 
-            N_iteration_test = 500
+            N_iteration_test = 1
             best_iou = 0
             iou_test_total = 0
             iou_min = 1
@@ -667,7 +667,7 @@ class SAC(Base_Agent):
                     best_plan = self.environment.plan
                     best_tb = self.environment.total_brick
                     self.environment.render(ax)
-                    save_path = "plots/"
+                    save_path = self.config.save_model_path
                     plt.savefig(save_path+"SAC_Plan"+str(plan)+'_good.png')
                 iou_test_total += iou_test
                 reward_test_total += reward_test
@@ -683,9 +683,9 @@ class SAC(Base_Agent):
     
             self.environment.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
 
-            save_path = "plots/"
+            save_path = self.config.save_model_path
             plt.savefig(save_path+"SAC_Plan"+str(plan)+'_summary.png')
-            '''
+        
 
 
 
