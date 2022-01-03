@@ -10,7 +10,6 @@ import numpy as np
 import tensorflow as tf
 import os
 print("successful load module")
-
 def main_exp(arg):
     env = DMP_Env_1D_dynamic.deep_mobile_printing_1d1r()
     env = make_vec_env(lambda: env, n_envs=1)
@@ -20,8 +19,7 @@ def main_exp(arg):
     model.learn(total_timesteps=int(time_steps), tb_log_name=arg["tb_log_name"])
     model.save(arg["model_save_path"])
     return model
-
-seeds=1
+seeds=5
 OUT_FILE_NAME="PPO_1d_sin"+"_seed_"+str(seeds)
 log_path="/mnt/NAS/home/WenyuHan/SNAC/PPO/1D/log/dynamic/"
 if os.path.exists(log_path) == False:

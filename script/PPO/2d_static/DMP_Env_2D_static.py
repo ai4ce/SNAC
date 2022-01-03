@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import gym
 import matplotlib.patches as patches
 from gym import spaces
-from skimage import draw
 from matplotlib.path import Path
 import math
 import matplotlib
