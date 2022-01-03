@@ -1,7 +1,5 @@
 import time
-
 from torch.utils.tensorboard import SummaryWriter
-
 from arguments import get_args
 from common.utils import create_log_dir, print_args, set_global_seeds, save_hyperparameters
 from env.Env1D import Env1DStatic, Env1DDynamic, Env1DDynamic_Validation

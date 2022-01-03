@@ -36,7 +36,7 @@ def get_args():
                         help='Final value of epsilon')
     parser.add_argument('--eps_decay', type=int, default=30000,
                         help='Adjustment parameter for epsilon')
-    parser.add_argument('--half_window_size', type=int, default=2,
+    parser.add_argument('--half_window_size', type=int, default=3,
                         help='Half the size of partially-observable window.')
     parser.add_argument('--max-episode-length', type=int, default=int(750), metavar='LENGTH',
                         help='Max episode length in game frames (0 to disable)')

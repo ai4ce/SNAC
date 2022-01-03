@@ -24,7 +24,6 @@ def test(env, args, current_model, best_iou, writer, episode, datetime):
         ax = fig.add_subplot(1, 1, 1)
 
     for i in range(args.evaluation_episodes):
-
         state = env.reset()
         count_brick = 0
         count_step = 0
