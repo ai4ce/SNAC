@@ -12,24 +12,36 @@ import matplotlib.animation as animation
 import time
 import os
 from collections import deque
-
-pth_plan = '7456'
-
-sys.path.append('../../Env/1D/')
+sys.path.append('../../../Env/1D/')
 from DMP_Env_1D_dynamic_test import deep_mobile_printing_1d1r
-
-save_path = "./log/DRQN_hindsight/plot/1D/Dynamic/"
-load_path = "./log/DRQN_hindsight/1D/Dynamic/"
+import statistics
+def set_seed(seeds):
+    torch.manual_seed(seeds)
+    torch.cuda.manual_seed_all(seeds)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seeds)
+    random.seed(seeds)
+    os.environ['PYTHONHASHSEED'] = str(seeds)
+## hyper parameter
+seeds=5
+set_seed(seeds)
+Lr= 0.0001
+pth_plan = "4256"
+Replay_memory_size=50000
+OUT_FILE_NAME="DRQN_hindsight_1d_"+"sin"+"_lr"+str(Lr)+"_seed_"+str(seeds)
+print(OUT_FILE_NAME)
+save_path = "mnt/NAS/home/WenyuHan/SNAC/DRQN_Hindsight/1D/plot/"
+load_path = "/mnt/NAS/home/WenyuHan/SNAC/DRQN_Hindsight/1D/log/dynamic/"+OUT_FILE_NAME+"/"
 if os.path.exists(save_path) == False:
     os.makedirs(save_path)
-device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
-
-print('1D_Static')
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print('1D_dynamic')
 print("device_using:", device)
 iou_all_average = 0
 iou_all_min = 1
+std_all = 0
 for plan_choose in range(10):
-
     env = deep_mobile_printing_1d1r(plan_choose=plan_choose)
     ######################
     # hyper parameter
@@ -147,59 +159,7 @@ for plan_choose in range(10):
 
             return action, hidden_state, cell_state
 
-        def learning_process(self, plan):
-            self.optimizer.zero_grad()
-            self.Eval_net.train()
-            if self.learn_step % Update_traget_period == 0:
-                self.Target_net.load_state_dict(self.Eval_net.state_dict())
-
-            hidden_batch, cell_batch = self.Eval_net.init_hidden_states(bsize=minibatch_size)
-            batch = self.replaymemory.get_batch(bsize=minibatch_size, time_step=Time_step)
-
-            current_states = []
-            acts = []
-            rewards = []
-            next_states = []
-
-            for b in batch:
-                cs, ac, rw, ns = [], [], [], []
-                for element in b:
-                    cs.append(element[0])
-                    ac.append(element[1])
-                    rw.append(element[2])
-                    ns.append(element[3])
-                current_states.append(cs)
-                acts.append(ac)
-                rewards.append(rw)
-                next_states.append(ns)
-            current_states = np.array(current_states)
-            acts = np.array(acts)
-            rewards = np.array(rewards)
-            next_states = np.array(next_states)
-
-            torch_current_states = torch.from_numpy(current_states).float().to(self.device)
-            torch_acts = torch.from_numpy(acts).long().to(self.device)
-            torch_rewards = torch.from_numpy(rewards).float().to(self.device)
-            torch_next_states = torch.from_numpy(next_states).float().to(self.device)
-
-            Q_s, _ = self.Eval_net.forward(torch_current_states, env_plan, bsize=minibatch_size, time_step=Time_step,
-                                           hidden_state=hidden_batch, cell_state=cell_batch)
-
-            Q_s_a = Q_s.gather(dim=1, index=torch_acts[:, Time_step - 1].unsqueeze(dim=1)).squeeze(dim=1)
-
-            Q_next, _ = self.Target_net.forward(torch_next_states, env_plan, bsize=minibatch_size, time_step=Time_step,
-                                                hidden_state=hidden_batch, cell_state=cell_batch)
-            Q_next_max, __ = Q_next.detach().max(dim=1)
-            target_values = torch_rewards[:, Time_step - 1] + (alpha * Q_next_max)
-
-            loss = self.loss(Q_s_a, target_values)
-
-            loss.backward()
-            self.optimizer.step()
-            self.learn_step += 1
-            self.loss_his.append(loss.item())
-
-
+      
     test_agent = DQN_AGNET(device)
     log_path = load_path + "Eval_net_episode_"
 
@@ -213,6 +173,7 @@ for plan_choose in range(10):
     start_time_test = time.time()
     fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(1, 1, 1)
+    iou_his = []
     for ep in range(N_iteration_test):
         print(ep)
         state = env.reset()
@@ -231,6 +192,7 @@ for plan_choose in range(10):
             prev_state = state_next[0]
             hidden_state, cell_state = hidden_state_next, cell_state_next
         iou_test = env.iou()
+        iou_his.append(iou_test)
         iou_min = min(iou_min, iou_test)
 
         if iou_test > best_iou:
@@ -241,18 +203,20 @@ for plan_choose in range(10):
             best_env = env.environment_memory
         iou_test_total += iou_test
         reward_test_total += reward_test
-
+    std_test=statistics.stdev(iou_his)
     reward_test_total = reward_test_total / N_iteration_test
     iou_test_total = iou_test_total / N_iteration_test
     secs = int(time.time() - start_time_test)
     mins = secs / 60
     secs = secs % 60
-    env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
+    # env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
     iou_all_average += iou_test_total
     iou_all_min = min(iou_min,iou_all_min)
-    plt.savefig(save_path+"Plan_test_"+str(plan_choose)+'.png')
-
+    # plt.savefig(save_path+"Plan_test_"+str(plan_choose)+'.png')
+std_all += std_test
+std_all = std_all/10
 iou_all_average = iou_all_average/10
 print('iou_all_average',iou_all_average)
 print('iou_all_min',iou_all_min)
-plt.show()
+print("std:",std_all)
+

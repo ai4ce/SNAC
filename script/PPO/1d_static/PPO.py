@@ -21,10 +21,10 @@ def main_exp(arg):
     return model
 
 if __name__ == "__main__":
-    PALN_CHOICE=0   # 0 Sin, 1 Gaussian, 2 Step
+    PALN_CHOICE=2   # 0 Sin, 1 Gaussian, 2 Step
     PLAN_LIST=["sin","Gaussian","step"]
     PLAN_NAME=PLAN_LIST[PALN_CHOICE]
-    seeds=1
+    seeds=5
     OUT_FILE_NAME="PPO_1d_"+PLAN_NAME+"_seed_"+str(seeds)
     log_path="/mnt/NAS/home/WenyuHan/SNAC/PPO/1D/log/static/"
     if os.path.exists(log_path) == False:
