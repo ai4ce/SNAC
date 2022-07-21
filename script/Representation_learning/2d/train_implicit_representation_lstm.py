@@ -8,6 +8,7 @@ import numpy as np
 import argparse
 import os 
 from torch.utils.tensorboard import SummaryWriter
+import time
 
 class Memory():
     def __init__(self,memsize):
@@ -60,7 +61,7 @@ def trainer(args, batch, model, optimizer, device):
 
 def main(args):
     replaymemory=Memory(args.Replay_buffer_size)
-    filename = './data_2d_static_dense_normalized_30000.pkl'
+    filename = './data_2d_static_sparse_normalized_30000.pkl'
     local_memories = joblib.load(filename)
     for local_memory in local_memories:
         replaymemory.add_episode(local_memory)
@@ -77,7 +78,14 @@ def main(args):
     batch = replaymemory.get_batch(bsize=args.batch_size,time_step=args.Time_step)  
     writer = SummaryWriter(log_dir)
     for episode in range(args.N_iteration):
+        start_time = time.time()
         loss_total, loss_obs_image, loss_obs_value = trainer(args, batch, AEmodel, optimizer, device)
+        secs = int(time.time() - start_time)
+        mins = secs / 60
+        secs = secs % 60
+        print('Epodise: ', episode+1,
+            '| total_loss:', loss_total, '| loss_obs_image:',loss_obs_image, '| loss_obs_value:',loss_obs_value)
+        print(" | time in %d minutes, %d seconds\n" % (mins, secs))
         writer.add_scalars("log",
                                 {'loss_total': loss_total,
                                 'loss_obs_image': loss_obs_image,
@@ -92,16 +100,16 @@ def main(args):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--device', default='cuda:1', help='device')
+    parser.add_argument('--device', default='cuda:0', help='device')
     parser.add_argument('--model_dir', default="model_dir_implict_representation_lstm", type=str, help='The path to the saved model')
     parser.add_argument('--log_dir', default="log_dir_implict_representation_lstm", type=str, help='The path to log')
     parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
-    parser.add_argument('--batch_size', default=5, type=int, help='Batch size')
-    parser.add_argument('--Time_step', default=20, type=int, help='sequence length')
+    parser.add_argument('--batch_size', default=100, type=int, help='Batch size')
+    parser.add_argument('--Time_step', default=50, type=int, help='sequence length')
     parser.add_argument('--hidden_size', default=256, type=int, help='LSTM hidden state size')
     parser.add_argument('--Replay_buffer_size', default=30000, type=int, help='replay buffer size')
-    parser.add_argument('--N_iteration', default=10, type=int, help='Number of tarining iteration') 
-    parser.add_argument('--checkpoint_freq', default=5, type=int, help='checkpoint saved frequency')    
+    parser.add_argument('--N_iteration', default=10000, type=int, help='Number of tarining iteration') 
+    parser.add_argument('--checkpoint_freq', default=1000, type=int, help='checkpoint saved frequency')    
     args = parser.parse_args()
     print(args)
     main(args)
