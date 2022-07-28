@@ -41,7 +41,7 @@ class RecurrentDecoder(nn.Module):
 
 class RecurrentAE(nn.Module):
     """Recurrent autoencoder"""
-    def __init__(self,input_size, output_size, hidden_size, device):
+    def __init__(self,input_size, output_size, hidden_size, device, train=True):
         super().__init__()
         # Encoder and decoder configuration
         self.hidden_size = hidden_size
@@ -51,6 +51,12 @@ class RecurrentAE(nn.Module):
         # Encoder and decoder
         self.encoder = RecurrentEncoder(self.input_size, self.hidden_size, self.device).to(device)
         self.decoder = RecurrentDecoder(self.hidden_size, self.output_size, self.device).to(device)
+        if train:
+            self.encoder.train()
+            self.decoder.train()
+        else:
+            self.encoder.eval()
+            self.decoder.eval()
 
     def forward(self, x, hidden_state):
         seq_len = x.shape[1]

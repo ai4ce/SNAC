@@ -61,7 +61,7 @@ def trainer(args, batch, model, optimizer, device):
 
 def main(args):
     replaymemory=Memory(args.Replay_buffer_size)
-    filename = './data_2d_static_sparse_normalized_30000.pkl'
+    filename = './data_2d_static_dense_normalized_30000.pkl'
     local_memories = joblib.load(filename)
     for local_memory in local_memories:
         replaymemory.add_episode(local_memory)
@@ -72,13 +72,12 @@ def main(args):
     model_dir = args.model_dir + OUT_FILE_NAME
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
-
     AEmodel = model.RecurrentAE(input_size=51, output_size=49*3+2, hidden_size=args.hidden_size, device=device)
     optimizer = torch.optim.Adam(AEmodel.parameters(), lr=args.lr)
-    batch = replaymemory.get_batch(bsize=args.batch_size,time_step=args.Time_step)  
     writer = SummaryWriter(log_dir)
     for episode in range(args.N_iteration):
         start_time = time.time()
+        batch = replaymemory.get_batch(bsize=args.batch_size,time_step=args.Time_step)  
         loss_total, loss_obs_image, loss_obs_value = trainer(args, batch, AEmodel, optimizer, device)
         secs = int(time.time() - start_time)
         mins = secs / 60
@@ -100,16 +99,16 @@ def main(args):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--device', default='cuda:0', help='device')
+    parser.add_argument('--device', default='cuda', help='device')
     parser.add_argument('--model_dir', default="model_dir_implict_representation_lstm", type=str, help='The path to the saved model')
     parser.add_argument('--log_dir', default="log_dir_implict_representation_lstm", type=str, help='The path to log')
     parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
-    parser.add_argument('--batch_size', default=100, type=int, help='Batch size')
-    parser.add_argument('--Time_step', default=50, type=int, help='sequence length')
-    parser.add_argument('--hidden_size', default=256, type=int, help='LSTM hidden state size')
+    parser.add_argument('--batch_size', default=500, type=int, help='Batch size')
+    parser.add_argument('--Time_step', default=20, type=int, help='sequence length')
+    parser.add_argument('--hidden_size', default=512, type=int, help='LSTM hidden state size')
     parser.add_argument('--Replay_buffer_size', default=30000, type=int, help='replay buffer size')
-    parser.add_argument('--N_iteration', default=10000, type=int, help='Number of tarining iteration') 
-    parser.add_argument('--checkpoint_freq', default=1000, type=int, help='checkpoint saved frequency')    
+    parser.add_argument('--N_iteration', default=1000000, type=int, help='Number of tarining iteration') 
+    parser.add_argument('--checkpoint_freq', default=5000, type=int, help='checkpoint saved frequency')    
     args = parser.parse_args()
     print(args)
     main(args)
