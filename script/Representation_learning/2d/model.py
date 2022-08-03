@@ -34,10 +34,9 @@ class RecurrentDecoder(nn.Module):
         # Initialize output
         x = torch.tensor([], device = self.device)
         # Squeezing
-        h_i = h_0.squeeze()
+        h_i = h_0.squeeze(0)
         # Reconstruct first element with encoder output
         x_i = self.dense_dec1(h_i)
-
         # Reconstruct remaining elements
         for i in range(0, seq_len):
             h_i = self.rec_dec1(x_i, h_i)
@@ -72,7 +71,7 @@ class RecurrentAE(nn.Module):
         seq_len = x.shape[1]
         h_n = self.encoder(x,hidden_state)
         out = self.decoder(h_n, seq_len)
-        return torch.flip(out, [1])
+        return torch.flip(out, [1]), h_n
 
 class SNAC_Lnet(nn.Module):
     """Recurrent Lnet
