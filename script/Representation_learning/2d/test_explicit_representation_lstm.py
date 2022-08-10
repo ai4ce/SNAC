@@ -50,13 +50,7 @@ for episode in range(1):
 
         torch_next_obs = torch.from_numpy(next_obs).float().unsqueeze(0).to(device)
         
-        # print("torch_current_obs",torch_current_obs.shape)
-        # print("torch_next_obs",torch_next_obs.shape)
-        # print("torch_current_pos",torch_current_pos.shape)
-        # print("action",torch_action.shape)
-
         input_data = torch.cat((torch_current_obs,torch_next_obs,torch_action),dim=2)
-        # print(input_data.shape)
 
         predicted_pos, hidden_next, cell_next =Lnet(input_data,torch_current_pos, hidden_batch, cell_batch)
         predict_pos = predicted_pos[0].squeeze().detach().cpu().numpy()
@@ -72,11 +66,13 @@ for episode in range(1):
         pos_map[predict_next_pos[0],predict_next_pos[1],1] = 1
 
         if step % 10 == 0:
-            # f, axarr = plt.subplots(1,2) 
-            plt.imshow(pos_map)
-            # axarr[0].axis('off')
-            # axarr[1].imshow(pos_map)
-            # axarr[1].axis('off')
+            f, axarr = plt.subplots(1,3) 
+            axarr[0].imshow(current_obs[0,0:49].reshape(7,7))
+            axarr[0].axis('off')
+            axarr[1].imshow(next_obs[0,0:49].reshape(7,7))
+            axarr[1].axis('off')
+            axarr[2].imshow(pos_map)
+            axarr[2].axis('off')
             plt.savefig(str(save_test_results_image_path)+"/timestep_"+str(step)+'.jpeg')
             plt.close()
         obs = new_obs
