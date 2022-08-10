@@ -63,8 +63,8 @@ model_dir=args.model_dir+"/"+OUT_FILE_NAME+"/"
 env = deep_mobile_printing_2d1r(plan_choose=PALN_CHOICE)
 if os.path.exists(model_dir)==False:
     os.makedirs(model_dir)
-if os.path.exists(args.log_dir)==False:
-    os.makedirs(args.log_dir)
+# if os.path.exists(args.log_dir)==False:
+#     os.makedirs(args.log_dir)
 
 Action_dim=env.action_dim
 State_dim=env.state_dim
@@ -238,7 +238,7 @@ while True:
 agent.greedy_epsilon=INITIAL_EPSILON
 best_reward=0
 total_steps = 0
-writer = SummaryWriter(args.log_dir)
+writer = SummaryWriter(args.log_dir+"/"+OUT_FILE_NAME)
 for episode in range(N_iteration):
     obs = env.reset()
     current_pos = obs[1]
@@ -350,7 +350,7 @@ for episode in range(N_iteration):
         with open(model_dir+"position.pickle", "wb") as fp: 
             pickle.dump(env.position_memory, fp)
         best_reward=reward_test_total
-    writer.add_scalars(OUT_FILE_NAME,
+    writer.add_scalars("log",
                                    {'train_loss': train_loss,
                                     'train_reward': reward_train,
                                     'train_iou': train_iou,
