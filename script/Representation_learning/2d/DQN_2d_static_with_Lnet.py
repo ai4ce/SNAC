@@ -29,14 +29,14 @@ def set_seed(seeds):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', default='cuda', help='device')
-parser.add_argument('--model_dir', default="model_dir_explict_representation_lstm", type=str, help='The path to the saved model')
-parser.add_argument('--log_dir', default="log_dir_explict_representation_lstm", type=str, help='The path to log')
+parser.add_argument('--model_dir', default="model_dir_DQN_withLnet", type=str, help='The path to the saved model')
+parser.add_argument('--log_dir', default="log_dir_DQN_withLnet", type=str, help='The path to log')
 parser.add_argument('--lr', default=0.00005, type=float, help='learning rate')
-parser.add_argument('--batch_size', default=20, type=int, help='Batch size')
+parser.add_argument('--batch_size', default=2000, type=int, help='Batch size')
 parser.add_argument('--plan_type', default=0, type=int, help='dense:0; sparse:1')
 parser.add_argument('--Random_seed', default=1, type=int, help='random seed')
-parser.add_argument('--Replay_buffer_size', default=500, type=int, help='replay buffer size')
-parser.add_argument('--N_iteration', default=3000, type=int, help='Number of tarining iteration') 
+parser.add_argument('--Replay_buffer_size', default=50000, type=int, help='replay buffer size')
+parser.add_argument('--N_iteration', default=10000, type=int, help='Number of tarining iteration') 
 
 args = parser.parse_args()
 
@@ -187,7 +187,7 @@ class DQN_AGNET():
         return train_loss
 
 Lnet = model.SNAC_Lnet(input_size=105, hidden_size=128, device=device, Loss_type="L2")
-model_checkpoint = torch.load("./model_01000000.pth", map_location=device)
+model_checkpoint = torch.load("./model_dir_explict_representation_lstm/Lr_0.0001_batchsize_500/model_01000000.pth", map_location=device)
 Lnet.load_state_dict(model_checkpoint)
 Lnet.to(device)
 Lnet.eval()

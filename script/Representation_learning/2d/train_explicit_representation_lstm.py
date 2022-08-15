@@ -88,7 +88,7 @@ def trainer(args, batch, model, optimizer, device):
 
 def main(args):
     replaymemory=Memory(args.Replay_buffer_size)
-    filename = './data_2d_static_dense_normalized_GTpos_100.pkl'
+    filename = './data_2d_static_dense_normalized_GTpos_30000.pkl'
     local_memories = joblib.load(filename)
     for local_memory in local_memories:
         replaymemory.add_episode(local_memory)
@@ -126,15 +126,15 @@ def main(args):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--device', default='cuda:0', help='device')
+    parser.add_argument('--device', default='cuda', help='device')
     parser.add_argument('--model_dir', default="model_dir_explict_representation_lstm", type=str, help='The path to the saved model')
     parser.add_argument('--log_dir', default="log_dir_explict_representation_lstm", type=str, help='The path to log')
     parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
-    parser.add_argument('--batch_size', default=10, type=int, help='Batch size')
-    parser.add_argument('--Time_step', default=5, type=int, help='sequence length')
+    parser.add_argument('--batch_size', default=500, type=int, help='Batch size')
+    parser.add_argument('--Time_step', default=20, type=int, help='sequence length')
     parser.add_argument('--hidden_size', default=128, type=int, help='LSTM hidden state size')
     parser.add_argument('--Replay_buffer_size', default=30000, type=int, help='replay buffer size')
-    parser.add_argument('--N_iteration', default=1, type=int, help='Number of tarining iteration') 
+    parser.add_argument('--N_iteration', default=1000000, type=int, help='Number of tarining iteration') 
     parser.add_argument('--checkpoint_freq', default=5000, type=int, help='checkpoint saved frequency')    
     parser.add_argument('--loss_type', default="L2", type=str, help='choose loss type from L2 and KL')    
     
