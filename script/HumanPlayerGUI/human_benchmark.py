@@ -6,10 +6,16 @@ import tkinter.messagebox
 import tkinter.simpledialog
 import tkinter.ttk as ttk
 from tkinter import *
+import json
+import time
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import MultipleLocator
+import numpy as np
 
-from arguments import get_args
-from env.Env1D import Env1DStatic, Env1DDynamic
-from env.Env2D import Env2DStatic, Env2DDynamic
+from .arguments import get_args
+from .env.Env1D import Env1DStatic, Env1DDynamic
+from .env.Env2D import Env2DStatic, Env2DDynamic
+from .env.Env3D import Env3DStatic, Env3DDynamic
 
 
 class HumanPlay:
@@ -27,10 +33,14 @@ class HumanPlay:
             5: '2D Static (Dense Plan)',
             6: '2D Static (Sparse Plan)',
             7: '2D Dynamic (Dense Plan)',
-            8: '2D Dynamic (Sparse Plan)'
+            8: '2D Dynamic (Sparse Plan)',
+            9: '3D Static (Dense Plan)',
+            10: '3D Static (Sparse Plan)',
+            11: '3D Dynamic (Dense Plan)',
+            12: '3D Dynamic (Sparse Plan)'
         }
         self.env = None
-        self.env_choose = 1  # goes from 1-8 (only 1D and 2D plans supported)
+        self.env_choose = 1  # goes from 1-12 (1D, 2D and 3D plans supported)
         self.args = get_args()
         self.environment_width = None
         self.environment_height = None
@@ -43,6 +53,10 @@ class HumanPlay:
         self.R_action_idx = None
         self.U_action_idx = None
         self.D_action_idx = None
+        self.L_brick_action_idx = None
+        self.R_brick_action_idx = None
+        self.U_brick_action_idx = None
+        self.D_brick_action_idx = None
 
         # State
         self.step_count = 0
@@ -74,6 +88,10 @@ class HumanPlay:
         self.build_menu_window()
         self.reset_game(self.env_choose)
 
+        #fig = plt.figure(figsize=[5, 5])
+        fig = plt.figure()
+        self.axe = fig.add_subplot(1, 1, 1, projection='3d')
+
     def reset_game(self, env_choose):
         self.env_choose = env_choose
         self.step_count = 0
@@ -82,6 +100,7 @@ class HumanPlay:
         self.episode_reward = 0
         self.done = False
         self.done = False
+        self.data = []
 
         if self.env is not None:
             self.env.close()
@@ -110,7 +129,7 @@ class HumanPlay:
             elif env_choose == 4:
                 self.env = Env1DDynamic(self.args)
 
-        else:
+        elif 4 < env_choose <= 8:
             self.display_state = [0 for i in range(49)]
             self.canvas_width = 400
             self.canvas_height = 400
@@ -136,6 +155,36 @@ class HumanPlay:
             elif env_choose == 8:
                 self.env = Env2DDynamic(self.args)
                 self.env.set_plan_choose(0)
+
+        else:
+            self.display_state = [0 for i in range(49)]
+            self.canvas_width = 400
+            self.canvas_height = 400
+
+            self.L_action_idx = 0
+            self.R_action_idx = 1
+            self.D_action_idx = 2
+            self.U_action_idx = 3
+            self.L_brick_action_idx = 4
+            self.R_brick_action_idx = 5
+            self.U_brick_action_idx = 6
+            self.D_brick_action_idx = 7
+
+            if env_choose == 9:
+                self.env = Env3DStatic(self.args)
+                self.env.set_plan_choose(0)
+
+            elif env_choose == 10:
+                self.env = Env3DStatic(self.args)
+                self.env.set_plan_choose(1)
+
+            elif env_choose == 11:
+                self.env = Env3DDynamic(self.args)
+                self.env.set_plan_choose(0)
+
+            elif env_choose == 12:
+                self.env = Env3DDynamic(self.args)
+                self.env.set_plan_choose(1)
 
         self.observation = self.env.reset()
         self.reset_game_window()
@@ -172,7 +221,15 @@ class HumanPlay:
                                      command=lambda x=7: self.reset_game(x)).pack()
         self.button_env8 = tk.Button(bottom, text="2D Dynamic (Sparse Plan)", fg="red",
                                      command=lambda x=8: self.reset_game(x)).pack()
-        self.button_env9 = tk.Button(right, text="End Episode", fg="black",
+        self.button_env9 = tk.Button(bottom, text="3D Static (Dense Plan)", fg="green",
+                                     command=lambda x=9: self.reset_game(x)).pack()
+        self.button_env10 = tk.Button(bottom, text="3D Static (Sparse Plan)", fg="green",
+                                     command=lambda x=10: self.reset_game(x)).pack()
+        self.button_env11 = tk.Button(bottom, text="3D Dynamic (Dense Plan)", fg="blue",
+                                     command=lambda x=11: self.reset_game(x)).pack()
+        self.button_env12 = tk.Button(bottom, text="3D Dynamic (Sparse Plan)", fg="blue",
+                                     command=lambda x=12: self.reset_game(x)).pack()
+        self.button_env13 = tk.Button(right, text="End Episode", fg="black",
                                      command=self.upon_episode_completion).pack()
 
     def reset_plan_window(self):
@@ -180,7 +237,7 @@ class HumanPlay:
             self.plan_window.destroy()
             self.plan_window = None
 
-        if self.env_choose in [4, 7, 8]:
+        if self.env_choose in [4, 7, 8, 11, 12]:
             self.plan_window = Tk()
             self.plan_window.geometry('+700+0')
             self.plan_window.title('Dynamic Plan')
@@ -217,11 +274,11 @@ class HumanPlay:
                     self.plan_canvas.create_text(20, 470 - i * 110, text=str(i * 5), fill='gray60', font=('Arial', 10))
                 for i in range(3, 23):
                     for j in range(3, 23):
-                        if self.env.plan[i][j] == 1:
+                        if self.env.plan[i][j] >= 1:
                             self.plan_canvas.create_rectangle(30 + 22 * (j - 3),
                                                               30 + 22 * (i - 3),
                                                               30 + 22 * (j - 2),
-                                                              30 +  + 22 * (i - 2),
+                                                              30 + + 22 * (i - 2),
                                                               outline='SeaGreen2',
                                                               fill='SeaGreen2')
             self.plan_canvas.pack()
@@ -238,6 +295,10 @@ class HumanPlay:
         self.game_window.bind("<Right>", lambda event: self.move('R'))
         self.game_window.bind("<Up>", lambda event: self.move('U'))
         self.game_window.bind("<Down>", lambda event: self.move('D'))
+        self.game_window.bind("<w>", lambda event: self.move('W'))
+        self.game_window.bind("<a>", lambda event: self.move('A'))
+        self.game_window.bind("<s>", lambda event: self.move('S'))
+        self.game_window.bind("<d>", lambda event: self.move('DB'))
 
         self.canvas = Canvas(
             self.game_window,
@@ -247,7 +308,7 @@ class HumanPlay:
         if self.env_choose <= 4:
             self.canvas.create_rectangle(162, 35, 237, 485, outline='gray75')
             for i in range(49):
-                self.canvas.create_line(162, 35 + 9 * (i + 1), 237,  35 + 9 * (i + 1), fill='gray85')
+                self.canvas.create_line(162, 35 + 9 * (i + 1), 237, 35 + 9 * (i + 1), fill='gray85')
             for i in range(4):
                 self.canvas.create_line(162 + 15 * (i + 1), 35, 162 + 15 * (i + 1), 485, fill='gray85')
             self.canvas.create_text(152, 485, text=str(0), fill='gray60', font=('Arial', 10))
@@ -272,9 +333,9 @@ class HumanPlay:
                 self.txt_totalreward_id = self.canvas.create_text(350, 530, text='total reward',
                                                                   fill='gray60', font=('Arial', 12))
                 self.num_reward_id = self.canvas.create_text(250, 555, text=str(0),
-                                                           fill='gray40', font=('Arial', 18))
+                                                             fill='gray40', font=('Arial', 18))
                 self.num_totalreward_id = self.canvas.create_text(350, 555, text=str(0),
-                                                           fill='gray40', font=('Arial', 18))
+                                                                  fill='gray40', font=('Arial', 18))
             else:
                 self.txt_steps_id = self.canvas.create_text(150, 530, text='steps taken',
                                                             fill='gray60', font=('Arial', 12))
@@ -334,7 +395,8 @@ class HumanPlay:
                                                             fill='gray40', font=('Arial', 18))
                 self.num_bricks_id = self.canvas.create_text(250, 355, text=str(0),
                                                              fill='gray40', font=('Arial', 18))
-
+            if self.env_choose >= 9:
+                self.render3D(self.axe)
         self.canvas.pack()
 
     def update_canvas(self):
@@ -355,24 +417,44 @@ class HumanPlay:
                                                                          162 + 15 * (i + 1),
                                                                          485 - int(value) * 9,
                                                                          fill='coral2', outline='coral2')
-        else:
-            for i in range(7):      # row
+        elif 5 <= self.env_choose <= 8:
+            for i in range(7):  # row
                 for j in range(7):  # column
                     self.canvas.delete(self.display_state[7 * i + j])
                     value = observation[7 * i + j]
                     if value == -1:
                         self.display_state[7 * i + j] = self.canvas.create_rectangle(60 + 40 * j,
-                                                                                 25 + 40 * i,
-                                                                                 60 + 40 * (j + 1),
-                                                                                 25 + 40 * (i + 1),
-                                                                                 fill='grey30', outline='grey30')
+                                                                                     25 + 40 * i,
+                                                                                     60 + 40 * (j + 1),
+                                                                                     25 + 40 * (i + 1),
+                                                                                     fill='grey30', outline='grey30')
                     elif value == 1:
                         self.display_state[7 * i + j] = self.canvas.create_rectangle(60 + 40 * j,
-                                                                                 25 + 40 * i,
-                                                                                 60 + 40 * (j + 1),
-                                                                                 25 + 40 * (i + 1),
-                                                                                 fill='coral2', outline='coral2')
+                                                                                     25 + 40 * i,
+                                                                                     60 + 40 * (j + 1),
+                                                                                     25 + 40 * (i + 1),
+                                                                                     fill='coral2', outline='coral2')
             self.canvas.create_text(201, 169, text='*', fill='red3', font=('Arial', 20), anchor=tk.CENTER)
+
+        else:
+            for i in range(7):  # row
+                for j in range(7):  # column
+                    self.canvas.delete(self.display_state[7 * i + j])
+                    value = observation[7 * i + j]
+                    if value == -1:
+                        self.display_state[7 * i + j] = self.canvas.create_rectangle(60 + 40 * j,
+                                                                                     25 + 40 * i,
+                                                                                     60 + 40 * (j + 1),
+                                                                                     25 + 40 * (i + 1),
+                                                                                     fill='grey30', outline='grey30')
+                    elif value >= 1:
+                        self.display_state[7 * i + j] = self.canvas.create_rectangle(60 + 40 * j,
+                                                                                     25 + 40 * i,
+                                                                                     60 + 40 * (j + 1),
+                                                                                     25 + 40 * (i + 1),
+                                                                                     fill='coral2', outline='coral2')
+            self.canvas.create_text(201, 169, text='*', fill='red3', font=('Arial', 20), anchor=tk.CENTER)
+            self.render3D(self.axe)
 
         self.canvas.itemconfigure(self.num_steps_id, text=str(self.step_count))
         self.canvas.itemconfigure(self.num_bricks_id, text=str(self.brick_count))
@@ -380,6 +462,62 @@ class HumanPlay:
         if self.in_training_mode():
             self.canvas.itemconfigure(self.num_reward_id, text=str(self.reward))
             self.canvas.itemconfigure(self.num_totalreward_id, text=str(self.episode_reward))
+
+    def render3D(self, axe):
+        axe.clear()
+
+        self.plan_width = self.env.plan_width
+        self.plan_height = self.env.plan_height
+        self.plan_length = self.env.plan_length
+        self.HALF_WINDOW_SIZE = self.env.HALF_WINDOW_SIZE
+        self.environment_memory = self.env.environment_memory
+        self.position_memory = self.env.position_memory
+
+        plan = self.env.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height,
+               self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
+        env_memory = self.environment_memory[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height,
+                     self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
+
+        center_x = self.position_memory[-1][1] - self.HALF_WINDOW_SIZE
+        center_y = self.position_memory[-1][0] - self.HALF_WINDOW_SIZE
+
+        min_x = 0 if center_x <= 3 else center_x - 3
+        max_x = 19 if center_x >= 16 else center_x + 3
+        min_y = 0 if center_y <= 3 else center_y - 3
+        max_y = 19 if center_y >= 16 else center_y + 3
+
+        axe.set_xlim(min_x, max_x + 1)
+        axe.set_ylim(max_y + 1, min_y)
+        axe.set_zlim(0, 2 * self.HALF_WINDOW_SIZE + 1)
+
+        view_block = np.zeros((self.plan_height, self.plan_width))
+        view_block[min_y:max_y + 1, min_x:max_x + 1] = env_memory[min_y:max_y + 1, min_x:max_x + 1]
+        x1, y1, z1 = self.env.plot_3d(view_block, Env=True)
+
+        width = depth = 1
+        height = np.zeros_like(z1)
+        if x1:
+            axe.bar3d(x1, y1, height, width, depth, z1, color='b', shade=True, alpha=0.15, edgecolor="k")
+        axe.scatter(self.position_memory[-1][1] - self.HALF_WINDOW_SIZE + 0.5,
+                    self.position_memory[-1][0] - self.HALF_WINDOW_SIZE + 0.5, zs=0, marker="*", color='b', s=50)
+        axe.view_init(elev=45, azim=315)
+
+        if min_x == 0:
+            axe.plot3D(xs = [0, 0], ys = [min_y, max_y + 1], zs = [0, 0])
+        if max_x == 19:
+            axe.plot3D(xs = [20, 20], ys = [min_y, max_y + 1], zs = [0, 0])
+        if min_y == 0:
+            axe.plot3D(xs = [min_x, max_x + 1], ys = [0, 0], zs = [0, 0])
+        if max_y == 19:
+            axe.plot3D(xs = [min_x, max_x + 1], ys = [20, 20], zs = [0, 0])
+        x_major_locator = MultipleLocator(1)
+        y_major_locator = MultipleLocator(1)
+        axe.xaxis.set_major_locator(x_major_locator)
+        axe.yaxis.set_major_locator(y_major_locator)
+        plt.tick_params(labelsize=1)
+        axe.grid()
+        plt.draw()
+        plt.pause(0.001)
 
     def upon_episode_completion(self):
         save = tkinter.messagebox.askquestion("Save", "Episode ended - save the result?")
@@ -394,8 +532,15 @@ class HumanPlay:
         self.reset_game(self.env_choose)
 
     def log_result(self, path):
+
         if not os.path.exists('results'):
             os.makedirs('results')
+
+        tick = time.time()
+        savename = str(self.user) + '_' + str(tick)
+        filename = 'results/%s.json' % savename
+        with open(filename, 'w') as file_obj:
+            json.dump(self.data, file_obj)
 
         with open(path, 'a', newline='') as log_file:
             schema = ['user', 'env', 'game_mode', 'iou', 'reward', 'num_steps', 'num_bricks']
@@ -410,21 +555,50 @@ class HumanPlay:
 
     def move(self, direction):
         if direction == 'L':
+            self.data.append([self.observation.tolist(), self.L_action_idx])
             self.observation, self.reward, self.done = self.env.step(self.L_action_idx)
             self.step_count += 1
             self.after_move()
         elif direction == 'R':
+            self.data.append([self.observation.tolist(), self.R_action_idx])
             self.observation, self.reward, self.done = self.env.step(self.R_action_idx)
             self.step_count += 1
             self.after_move()
         elif direction == 'D' and self.env_choose > 4:
+            self.data.append([self.observation.tolist(), self.D_action_idx])
             self.observation, self.reward, self.done = self.env.step(self.D_action_idx)
             self.step_count += 1
             self.after_move()
         elif direction == 'U' and self.env_choose > 4:
+            self.data.append([self.observation.tolist(), self.U_action_idx])
             self.observation, self.reward, self.done = self.env.step(self.U_action_idx)
             self.step_count += 1
             self.after_move()
+        elif direction == 'A' and self.env_choose > 8:
+            self.data.append([self.observation.tolist(), self.L_brick_action_idx])
+            self.observation, self.reward, self.done = self.env.step(self.L_brick_action_idx)
+            self.step_count += 1
+            self.brick_count += 1
+            self.after_move()
+        elif direction == 'DB' and self.env_choose > 8:
+            self.data.append([self.observation.tolist(), self.R_brick_action_idx])
+            self.observation, self.reward, self.done = self.env.step(self.R_brick_action_idx)
+            self.step_count += 1
+            self.brick_count += 1
+            self.after_move()
+        elif direction == 'W' and self.env_choose > 8:
+            self.data.append([self.observation.tolist(), self.U_brick_action_idx])
+            self.observation, self.reward, self.done = self.env.step(self.U_brick_action_idx)
+            self.step_count += 1
+            self.brick_count += 1
+            self.after_move()
+        elif direction == 'S' and self.env_choose > 8:
+            self.data.append([self.observation.tolist(), self.D_brick_action_idx])
+            self.observation, self.reward, self.done = self.env.step(self.D_brick_action_idx)
+            self.step_count += 1
+            self.brick_count += 1
+            self.after_move()
+
 
     def after_move(self):
         self.update_canvas()
@@ -432,12 +606,14 @@ class HumanPlay:
             self.upon_episode_completion()
 
     def keypress(self, event):
-        if event.char == ' ':  # Space bar (drop brick in current location)
+        if event.char == ' ' and self.env_choose <= 8:  # Space bar (drop brick in current location)
+            self.data.append([self.observation.tolist(), self.brick_action_idx])
             self.observation, self.reward, self.done = self.env.step(self.brick_action_idx)
             self.episode_reward += self.reward
             self.step_count += 1
             self.brick_count += 1
             self.after_move()
+
 
         elif event.char == '\x1b':  # Escape key (stop playing)
             self.upon_episode_completion()
@@ -455,4 +631,3 @@ class HumanPlay:
 
     def mainloop(self):
         self.menu_window.mainloop()
- 
