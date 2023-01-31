@@ -1,19 +1,10 @@
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-import math
-import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import gym
-from gym import spaces
-import matplotlib.patches as patches
-import time
-from matplotlib.path import Path
-import cv2
-
+import joblib
 
 class deep_mobile_printing_3d1r_hindsight(gym.Env):
-    def __init__(self, plan_choose=1):
+    def __init__(self, data_path, random_choose_paln=True):
 
         self.step_size = 1
 
@@ -44,38 +35,23 @@ class deep_mobile_printing_3d1r_hindsight(gym.Env):
         self.state_dim = (2 * self.HALF_WINDOW_SIZE + 1) ** 2 + 2
         self.blank_size = 2  # use 0, 2, 4
         self.start = None
-        self.plan_choose = plan_choose
-
-    def create_plan(self):
-        if not (self.plan_choose == 1 or self.plan_choose == 0):
-            raise ValueError(' 0: Dense triangle, 1: Sparse triangle')
-
-        plan = np.zeros((self.environment_height, self.environment_width))
-        area_min = [50, 20]
-        area_max = 110
-        total_area = 0
-        i = 0
-        while total_area <= area_min[self.plan_choose] or total_area >= area_max:
-            i += 1
-            x = np.random.randint(0, self.plan_width, size=3)
-            y = np.random.randint(0, self.plan_height, size=3)
-
-            img_rgb = np.ones((self.plan_height, self.plan_width, 3), np.uint8) * 255
-            vertices = np.array([[x[0], y[0]], [x[1], y[1]], [x[2], y[2]]], np.int32)
-            pts = vertices.reshape((-1, 1, 2))
-            cv2.polylines(img_rgb, [pts], isClosed=True, color=(0, 0, 0))
-            if self.plan_choose == 0:
-                cv2.fillPoly(img_rgb, [pts], color=(0, 0, 0))
-
-            plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height,
-            self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width] = 1 - img_rgb[:, :, 0] / 255
-            total_area = sum(sum(plan))
-        plan = plan * self.z
-        total_area = total_area * self.z
-        return plan, total_area
+        self.plan_dataset = joblib.load(data_path)
+        self.plan_dataset_len = len(self.plan_dataset)
+        self.random_choose_paln = random_choose_paln
+        self.index_for_non_random = 0
 
     def reset(self):
-        self.plan, self.total_brick = self.create_plan()
+        if self.random_choose_paln:
+            self.index_random = np.random.randint(0, self.plan_dataset_len)
+            self.plan = self.plan_dataset[self.index_random]
+            self.total_brick = sum(sum((self.plan/self.z)))*self.z
+        else:
+            self.plan = self.plan_dataset[self.index_for_non_random]
+            self.total_brick = sum(sum((self.plan/self.z)))*self.z
+            self.index_for_non_random += 1
+            if self.index_for_non_random == self.plan_dataset_len:
+                self.index_for_non_random = 0
+
         self.input_plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height,
                           self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
         self.environment_memory = np.zeros((self.environment_height, self.environment_width))
@@ -218,27 +194,37 @@ class deep_mobile_printing_3d1r_hindsight(gym.Env):
             else:
                 build_brick = False
 
-            done = bool(self.count_brick >= self.total_brick) or check[0:4] == [1, 1, 1, 1]
-            if done:
+            check = self.check_sur(self.position_memory[-1])
+            if check[0:4] == [1, 1, 1, 1]:
+                done = True
                 observation = [np.hstack(
-                    (self.observation_(position), np.array([[self.count_brick]]), np.array([[self.count_step]]))),
-                    self.input_plan]
+                    (self.observation_(position), np.array([[self.count_brick/self.total_brick]]), np.array([[self.count_step/self.total_step]]))),
+                    self.input_plan, position]
+                reward = -100.0
+                return observation, reward, done
+            elif self.count_brick >= self.total_brick:
+                done = True
+                observation = [np.hstack(
+                    (self.observation_(position), np.array([[self.count_brick/self.total_brick]]), np.array([[self.count_step/self.total_step]]))),
+                    self.input_plan, position]
                 reward = 0.0
                 return observation, reward, done
             else:
+                done = False
                 if build_brick:
                     reward = self.reward_check(brick_target)
                     observation = [np.hstack(
-                        (self.observation_(position), np.array([[self.count_brick]]), np.array([[self.count_step]]))),
-                        self.input_plan]
+                    (self.observation_(position), np.array([[self.count_brick/self.total_brick]]), np.array([[self.count_step/self.total_step]]))),
+                    self.input_plan, position]
                     return observation, reward, done
         else:
+            # illegal_move = useless_move!!
             position = self.position_memory[-1]
 
-        done = bool(self.count_step >= self.total_step) or check[0:4] == [1, 1, 1, 1]
+        done = bool(self.count_step >= self.total_step) 
         observation = [np.hstack(
-            (self.observation_(position), np.array([[self.count_brick]]), np.array([[self.count_step]]))),
-            self.input_plan]
+                    (self.observation_(position), np.array([[self.count_brick/self.total_brick]]), np.array([[self.count_step/self.total_step]]))),
+                    self.input_plan, position]
         reward = 0.0
         return observation, reward, done
 

@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import torch
-
 from common.utils import load_model
 from models.model_1D import DQN_1D
 from models.model_2D import DQN_2D

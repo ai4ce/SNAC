@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 sys.path.append('../Env/1D/')
-from DMP_Env_1D_static import deep_mobile_printing_1d1r
+#from DMP_Env_1D_static import deep_mobile_printing_1d1r
 
 class RobotMove:
     def __init__(self, env):
@@ -26,6 +26,7 @@ class RobotMove:
         self.action = self.turn_right
         self.reward = 0
         self.observation = None
+        self.prev_observation = None
         self.done = False
         self.current_pos = self.env.HALF_WINDOW_SIZE
         self.saved_heights = np.zeros(len(self.env.plan) + 2 * self.env.HALF_WINDOW_SIZE)
@@ -38,20 +39,18 @@ class RobotMove:
     def localize(self):
 
         step_sign = -1 if self.action == self.turn_left else 1
-
-        start_step3 = (self.current_pos + 3 * step_sign)
-        start_step3 = self.env.clip_position(start_step3) - self.env.HALF_WINDOW_SIZE
-        end_step3 = start_step3 + 5
-        start_step2 = (self.current_pos + 2 * step_sign ) 
-        start_step2 = self.env.clip_position(start_step2) - self.env.HALF_WINDOW_SIZE
-        end_step2 = start_step2 + 5
-        start_step1 = (self.current_pos + 1 * step_sign ) 
-        start_step1 = self.env.clip_position(start_step1) - self.env.HALF_WINDOW_SIZE
-        end_step1 = start_step1 + 5
-
-        is_3_steps = np.array_equal(self.observation[0, 0:5], self.saved_heights[start_step3 : end_step3 ])
-        is_2_steps = np.array_equal(self.observation[0, 0:5], self.saved_heights[start_step2 : end_step2])
-        is_1_step = np.array_equal(self.observation[0, 0:5], self.saved_heights[ start_step1 : end_step1])
+       
+        if self.action == self.turn_right:
+            is_1_step = np.array_equal(self.prev_observation[0,1:], self.observation[0,:-1])
+           
+            is_2_steps = np.array_equal(self.prev_observation[0,2:], self.observation[0,:-2])
+            
+            is_3_steps = np.array_equal(self.prev_observation[0,3:], self.observation[0,:-3])
+            
+        else:
+            is_1_step = np.array_equal(self.observation[0,1:], self.prev_observation[0,:-1])
+            is_2_steps = np.array_equal(self.observation[0,2:], self.prev_observation[0,:-2])
+            is_3_steps = np.array_equal(self.observation[0,3:], self.prev_observation[0,:-3])
         
         overlap = is_3_steps + is_2_steps + is_1_step
         left_most = self.env.HALF_WINDOW_SIZE
@@ -59,6 +58,7 @@ class RobotMove:
 
         if self.current_pos + 2 * step_sign in (left_most, right_most) and not is_1_step and is_2_steps:
             self.current_pos += 2 * step_sign
+            self.current_pos = self.env.clip_position(self.current_pos)
             return
         elif overlap > 1: #odometry or current_pos at plan_width-1 where robot can only move 1 step to the right, vice versa for left
             self.current_pos += 1 * step_sign
@@ -66,12 +66,12 @@ class RobotMove:
             print("overlapped ", self.current_pos)
             return
 
-        if is_3_steps:
-            self.current_pos += 3 * step_sign
+        if is_1_step:
+            self.current_pos += 1 * step_sign
         elif is_2_steps:
             self.current_pos += 2 * step_sign 
-        elif is_1_step:
-            self.current_pos += 1 * step_sign 
+        elif is_3_steps:
+            self.current_pos += 3 * step_sign 
 
         self.current_pos = self.env.clip_position(self.current_pos)
 
@@ -79,11 +79,19 @@ class RobotMove:
         if self.done:
             return
         
-        if self.saved_heights[self.current_pos] < self.env.plan[self.current_pos - self.env.HALF_WINDOW_SIZE]:
-            self.observation, self.reward, self.done = self.env.step(self.place_brick)
-            if isinstance(self.observation, list):
-                self.observation = self.observation[0]
-            self.saved_heights[self.current_pos] += 1
+        self.prev_observation = self.observation
+        
+        
+       # print(self.current_pos - self.env.HALF_WINDOW_SIZE)
+        
+        if self.observation is None or self.observation[0, 2] < self.env.plan[self.current_pos - self.env.HALF_WINDOW_SIZE]:
+            observation, self.reward, self.done = self.env.step(self.place_brick)
+    
+            if isinstance(observation, list):
+                self.observation = observation[0][0,0:5].reshape(1,5)
+            else:
+                self.observation = observation[0,0:5].reshape(1,5)
+            
         else:
             pos = 2
             self.action = None 
@@ -109,9 +117,14 @@ class RobotMove:
 
             
 
-            self.observation, self.reward, self.done = self.env.step(self.action)
-            if isinstance(self.observation, list):
-                self.observation = self.observation[0]
+            observation, self.reward, self.done = self.env.step(self.action)
+            
+            if isinstance(observation, list):
+                self.observation = observation[0][0,0:5].reshape(1,5)
+            else:
+                self.observation = observation[0,0:5].reshape(1,5)
+                
+            
             self.localize()
         
             
@@ -126,10 +139,13 @@ if __name__ == "__main__":
 
     env = deep_mobile_printing_1d1r(plan_choose=1)
     observation = env.reset()
+    observation = observation[0][:49]
     fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(1, 1, 1)
-    print(env.total_brick)
-    print(env.one_hot)
+# =============================================================================
+#     print(env.total_brick)
+#     print(env.one_hot)
+# =============================================================================
     step = env.total_step
     ax.clear()
    

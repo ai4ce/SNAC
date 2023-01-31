@@ -1,5 +1,9 @@
 import argparse
 import torch
+import sys
+sys.path.append('../../')
+import sys
+import utils
 
 def get_args():
     parser = argparse.ArgumentParser(description='DQN')
@@ -15,7 +19,7 @@ def get_args():
                         help='Batch size')
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')
-    parser.add_argument('--cuda_number', type=str, default='cuda:0',
+    parser.add_argument('--cuda_number', type=str, default='cuda',
                         help='which GPU to use')
     # Training Arguments
     parser.add_argument('--max-frames', type=int, default=2150000, metavar='STEPS',
@@ -36,8 +40,6 @@ def get_args():
                         help='Final value of epsilon')
     parser.add_argument('--eps_decay', type=int, default=30000,
                         help='Adjustment parameter for epsilon')
-    parser.add_argument('--half_window_size', type=int, default=3,
-                        help='Half the size of partially-observable window.')
     parser.add_argument('--max-episode-length', type=int, default=int(750), metavar='LENGTH',
                         help='Max episode length in game frames (0 to disable)')
     parser.add_argument('--history-length', type=int, default=1, metavar='T',
@@ -104,8 +106,21 @@ def get_args():
     # Optimization Arguments
     parser.add_argument('--lr', type=float, default=.00005, metavar='η',
                         help='Learning rate')
-
+    parser.add_argument('--config-path')
+    
     args = parser.parse_args()
+
+
+    config_path = args.config_path
+    if config_path is None:
+        return None
+    cfg_args = utils.read_config(config_path)
+    args.lr = cfg_args.lr
+    args.seed = cfg_args.Random_seed
+    args.env = cfg_args.env
+    args.cuda_number = cfg_args.device
+    args.plan_choose = cfg_args.plan_type
+    args.half_window_size = cfg_args.half_window_size 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     args.device = torch.device(args.cuda_number if args.cuda else "cpu")
     print(args.device)

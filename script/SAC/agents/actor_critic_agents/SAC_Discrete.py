@@ -84,8 +84,9 @@ class SAC_Discrete(SAC):
     def calculate_actor_loss(self, state_batch):
         """Calculates the loss for the actor. This loss includes the additional entropy term"""
         action, (action_probabilities, log_action_probabilities), _ = self.produce_action_and_action_info(state_batch)
-        qf1_pi = self.critic_local(state_batch)
-        qf2_pi = self.critic_local_2(state_batch)
+        with torch.no_grad():
+            qf1_pi = self.critic_local(state_batch)
+            qf2_pi = self.critic_local_2(state_batch)
         min_qf_pi = torch.min(qf1_pi, qf2_pi)
         inside_term = self.alpha * log_action_probabilities - min_qf_pi
         policy_loss = action_probabilities * inside_term

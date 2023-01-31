@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import sys
 import torch
@@ -13,16 +12,12 @@ import heapq
 import statistics
 sys.path.append('../../Env/3D/')
 from DMP_simulator_3d_static_circle_test import deep_mobile_printing_3d1r
-
-save_path = "./log/slam/plot/3D_modify/Static/"
+save_path = "./SLAM/plot/3D/Static/"
 if os.path.exists(save_path) == False:
     os.makedirs(save_path)
-
 print('3D_Static')
-
 iou_all_average = 0
 iou_all_min = 1
-
 def localization(action, obs, new_obs, previous_position):
     [y,x]=previous_position
     # 0 left, 1 right, 2 up, 3 down, 4 drop
@@ -40,8 +35,6 @@ def localization(action, obs, new_obs, previous_position):
         print('enter action_none')
         new_x = x + dx[action]
         new_y = y + dy[action]
-
-
     else:
         if action == 0:
             if (obs[:, :size_x + dx[action]] == new_obs[:, -dx[action]:]).all():
@@ -88,12 +81,10 @@ def localization(action, obs, new_obs, previous_position):
     if new_x >= env.plan_width: new_x = env.plan_width - 1
     if new_y < 0: new_y = 0
     if new_y >= env.plan_width: new_y = env.plan_width - 1
-
     # if the robot can see the wall, it can localize its position
     dff_y = 0
     dff_x = 0
     mid = size_x // 2
-
     if new_obs[0][mid] == -1.0:  # check upper_all
         print('check_up')
         for i in range(1, env.HALF_WINDOW_SIZE):
@@ -120,17 +111,12 @@ def localization(action, obs, new_obs, previous_position):
         new_x = env.plan_width - env.HALF_WINDOW_SIZE + dff_x
     
     return [new_y, new_x]
-
-
 def planing(position,obs,current_action_prior):
     ###   reshape the input value 
     obs = obs[0][:49].reshape(7, 7)
     current_position_row = position[0] + env.HALF_WINDOW_SIZE
     current_position_column = position[1] + env.HALF_WINDOW_SIZE
-    
-    
     ### check avaliable action by surroding bricks 
-    
     avaliable_action= [0,1,2,3] 
     if obs[3,2]>0:
         avaliable_action.remove(0)
@@ -140,11 +126,7 @@ def planing(position,obs,current_action_prior):
         avaliable_action.remove(3)
     if obs[4,3]>0:
         avaliable_action.remove(2)
-        
-    
-    
     ######### determine the current action prior 
-    
     if (obs[:,0] == -1).all() or (obs[:,0:1] == -1).all()  or (obs[:,0:2] == -1).all(): ## in this case, robot observe left wall, so move right will be advanced
         current_action_prior[0]=0
         current_action_prior[1]=0.5
@@ -156,8 +138,7 @@ def planing(position,obs,current_action_prior):
         current_action_prior[1]=0
     if (obs[6,:] == -1).all() or (obs[5:6,:] == -1).all()  or (obs[4:6,:] == -1).all(): ## in this case, robot observe top wall, so move up will be advanced
         current_action_prior[2]=0
-        current_action_prior[3]=0.5
-        
+        current_action_prior[3]=0.5    
     ##### check the observation with the design D 
     distance_array=[]
     for i in range(7):
@@ -171,14 +152,12 @@ def planing(position,obs,current_action_prior):
                     heapq.heappush(distance_array, (np.inf, [i,j]))
                 if 0<=obs[i,j]<env.z and env.plan[current_position_row-(3-i),current_position_column-(3-j)]==env.z:
                     heapq.heappush(distance_array, (np.abs(3-i)+np.abs(3-j), [i,j]))
-    
     smallest_distance_candidate=[]
     smallest_distance_candidate.append(heapq.heappop(distance_array))
     if smallest_distance_candidate[0][0]==np.inf:  ### in this case, all the position should not be built and also dont know where to move 
         action = np.random.choice(4, p=current_action_prior) ### so we choose action base on priority 
         if (action not in avaliable_action):
             action = np.random.choice(avaliable_action)
-        
         return action, current_action_prior  
     else:           ### in this case, we store all all the possible position for next step
         for i in range(49):
@@ -192,10 +171,8 @@ def planing(position,obs,current_action_prior):
             action = np.random.choice(4, p=current_action_prior) ### so we choose action base on priority 
             if (action not in avaliable_action):
                 action = np.random.choice(avaliable_action)
-        
             return action, current_action_prior  
             
-        
     ### in this case we need to decide action base on candidate position 
     
     for i in range(len(smallest_distance_candidate)):
@@ -262,20 +239,13 @@ def planing(position,obs,current_action_prior):
     if (action not in avaliable_action):
         action = np.random.choice(avaliable_action)
     return action,current_action_prior 
-
-
 std_his=[]
 for plan_choose in range(2):
     iou_his=[]
     env = deep_mobile_printing_3d1r(plan_choose=plan_choose)
     ######################
     # hyper parameter
-    
-    
-    N_iteration_test=500
-   
-
- 
+    N_iteration_test=5
     best_iou=0
     iou_test_total=0
     reward_test_total=0
@@ -287,28 +257,15 @@ for plan_choose in range(2):
     fig = plt.figure(figsize=[10, 5])
     ax1 = fig.add_subplot(1, 2, 1, projection='3d')
     ax2 = fig.add_subplot(1, 2, 2)
-
-
     for i in range(N_iteration_test):
-       
-        
         obs = env.reset()
-
-#         print(env.total_brick)
         current_position=[0,0]
         current_action_prior=[0, 0, 0, 0] 
         reward_test=0
-#         print('Ep:',i)
-
         while True:
             action,next_action_prior = planing(current_position,obs,current_action_prior)
-#             print('action', action)
             new_obs, reward, done = env.step(action)
             next_position = localization(action, obs, new_obs, current_position)
-#             print('position', env.position_memory[-1][0] - 3, env.position_memory[-1][1] - 3)
-#             print('location', next_position[0], next_position[1])
-#             print('#################')
-            
             reward_test += reward
             if done:
                 break
@@ -318,7 +275,6 @@ for plan_choose in range(2):
         iou_test=env.iou()
         iou_history.append(iou_test)
         iou_his.append(iou_test)
-
         iou_min = min(iou_min,iou_test)
         if iou_test > best_iou:
             best_iou = iou_test
@@ -328,10 +284,8 @@ for plan_choose in range(2):
             best_tb = env.total_brick
             best_env = env.environment_memory
             best_posi = env.position_memory[-1]
-
         iou_test_total+=iou_test
         reward_test_total+=reward_test
-
     reward_test_total=reward_test_total/N_iteration_test
     iou_test_total=iou_test_total/N_iteration_test
     secs = int(time.time() - start_time_test)
@@ -339,37 +293,14 @@ for plan_choose in range(2):
     secs = secs % 60
     std = statistics.pstdev(iou_his)
     std_his.append(std)
-
     iou_all_average += iou_test_total
     iou_all_min = min(iou_min,iou_all_min)
-
-  
-
     print("total_brick:", env.total_brick)
     print('iou_his:',iou_history)
     print('iou_min:',min(iou_history))
-    # env.render(ax)
-    # if best_iou>0:
-    #     env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
-    #                best_iou=best_iou,best_step=best_step,best_brick=best_brick,position_memo = best_posi)
-    # else:
-    #     env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
-    # plt.savefig(save_path + "Plan" + str(plan_choose) + '.png')
-
-
-    # while True:
-    #     action,hidden_state_next, cell_state_next = test_agent.choose_action(state,env_plan,hidden_state, cell_state)
-    #     state_next, r, done = env.step(action)
-    #     # env.render(ax,iou_min,iou_test_total,N_iteration_test)
-    #     # plt.pause(0.1)
-    #     total_reward+=r
-    #     if done:
-    #         env.render(ax, iou_min, iou_test_total, N_iteration_test)
-    #         plt.savefig(save_path + "Plan" + str(plan_choose) + '.png')
-    #         break
-    #     state = state_next
-    #     hidden_state, cell_state = hidden_state_next, cell_state_next
-
+    env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
+                  best_iou=best_iou,best_step=best_step,best_brick=best_brick,position_memo = best_posi)
+    plt.savefig(save_path + "Plan" + str(plan_choose) + '.png')
 iou_all_average = iou_all_average/2
 print('#### Finish #####')
 print('iou_all_average',iou_all_average)

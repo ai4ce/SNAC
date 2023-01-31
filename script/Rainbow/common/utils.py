@@ -37,12 +37,12 @@ def create_log_dir(args):
         log_dir = log_dir + "double-"
     if args.noisy:
         log_dir = log_dir + "noisy-"
-    log_dir = log_dir + "dqn-"
+    log_dir = log_dir + "dqn-plan" + str(args.plan_choose) + "-lr" + str(args.lr) + "-seed" + str(args.seed) 
     
     now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     log_dir = log_dir + now
 
-    log_dir = os.path.join("runs", log_dir)
+    log_dir = os.path.join(args.results_path, log_dir)
     return log_dir
 
 def print_log(frame, prev_frame, prev_time, reward_list, length_list, loss_list, args):

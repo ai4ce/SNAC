@@ -1,6 +1,3 @@
-# NOTE that this code is not mine and was taken from https://becominghuman.ai/logging-in-tensorboard-with-pytorch-or-any-other-library-c549163dee9e
-
-
 import io
 import numpy as np
 from PIL import Image

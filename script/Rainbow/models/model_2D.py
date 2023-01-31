@@ -1,11 +1,9 @@
 import math
 import random
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from env.Env1D import Env1DStatic
+from env.Env2D import Env2DStatic
 
 
 def DQN_2D(env, args):
@@ -109,8 +107,8 @@ class DQNBase(nn.Module):
         return x
     
     def _feature_size(self):
-        if isinstance(self.env, Env1DStatic):
-            return 65
+        if isinstance(self.env, Env2DStatic):
+            return 50
         else:
             return 115
         # return self.env.get_features() - 1 + 32

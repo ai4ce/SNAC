@@ -1,15 +1,10 @@
 import numpy as np
-import math
-import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import gym
-import torch
-from gym import spaces
-
+import joblib
 
 class deep_mobile_printing_1d1r(gym.Env):
-    def __init__(self):
+    def __init__(self,data_path, random_choose_paln=True):
 
         self.step_size = 1
         self.plan_width = 30  # plan parameters: width, height, base_line
@@ -32,20 +27,10 @@ class deep_mobile_printing_1d1r(gym.Env):
         self.action_dim = 3
         self.state_dim = self.HALF_WINDOW_SIZE * 2 + 1 + 2 + self.plan_width
 
-    def create_plan(self):
-        plan_width = self.plan_width
-
-        k_1 = np.random.uniform(3, 12)
-        k_2 = np.random.randint(1, 4)
-        phase = np.random.uniform(-1, 1) * np.pi
-        one_hot = [k_1, k_2, phase]
-        self.one_hot = one_hot
-
-        x = np.arange(plan_width)
-        y = np.round((k_1 * np.sin(2 * np.pi / plan_width * (k_2 * x + phase)) + self.plan_height))
-        area = sum(y)
-
-        return y, area
+        self.plan_dataset = joblib.load(data_path)
+        self.plan_dataset_len = len(self.plan_dataset)
+        self.random_choose_paln = random_choose_paln
+        self.index_for_non_random = 0
 
     def clip_position(self, position):
         if position <= self.HALF_WINDOW_SIZE:
@@ -58,7 +43,16 @@ class deep_mobile_printing_1d1r(gym.Env):
 
     def reset(self):
         self.one_hot = None
-        self.plan, self.total_brick = self.create_plan()
+        if self.random_choose_paln:
+            self.index_random = np.random.randint(0, self.plan_dataset_len)
+            self.plan = self.plan_dataset[self.index_random]
+            self.total_brick = sum(self.plan)
+        else:
+            self.plan = self.plan_dataset[self.index_for_non_random]
+            self.total_brick = sum(self.plan)
+            self.index_for_non_random += 1
+            if self.index_for_non_random == self.plan_dataset_len:
+                self.index_for_non_random = 0
         self.environment_memory = np.zeros((1, self.environment_width))
         self.environment_memory[:, :self.HALF_WINDOW_SIZE] = -1
         self.environment_memory[:, -self.HALF_WINDOW_SIZE:] = -1

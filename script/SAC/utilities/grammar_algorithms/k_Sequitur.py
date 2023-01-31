@@ -1,20 +1,4 @@
-
-# My implementation of the k_Sequitur algorithm described in the papers: https://arxiv.org/pdf/cs/9709102.pdf
-# and https://www.biorxiv.org/content/biorxiv/early/2018/03/13/281543.full.pdf
-# The algorithm takes in a sequence and forms a grammar using two rules:
-# 1) No pair of adjacent symbols appears more than k times in the grammar
-# 2) Every rule in the grammar is used more than k times
-#
-# e.g. string "abddddeabde" with k=2 would turn to:
-# "AdddBAB"
-# R1: A --> ab
-# R2: B --> de
-
-# TODO fix the fact that it sometimes provides rules that have end of episode symbol in them
-# TODO add an option to return rules in terms of the amount of times they appear in a set of provided episodes
-
 from collections import defaultdict, Counter
-
 
 class k_Sequitur(object):
 

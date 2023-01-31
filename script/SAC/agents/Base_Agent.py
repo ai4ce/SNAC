@@ -7,11 +7,8 @@ import numpy as np
 import torch
 import time
 import pickle
-# sys.path.append('./nn_builder')
-# import tensorflow as tf
 from .NN import NN
-# from tensorboardX import SummaryWriter
-from torch.optim import optimizer
+torch.autograd.set_detect_anomaly(True)
 
 class Base_Agent(object):
 
@@ -159,7 +156,7 @@ class Base_Agent(object):
 
     def reset_game(self):
         """Resets the game information so we are ready to play a new episode"""
-        self.environment.seed(self.config.seed)
+        # self.environment.seed(self.config.seed)
         self.state = self.environment.reset()
         self.next_state = None
         self.action = None

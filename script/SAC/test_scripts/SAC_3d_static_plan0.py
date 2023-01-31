@@ -1,9 +1,6 @@
-import os
 import sys
 from os.path import dirname, abspath
 sys.path.append(dirname(dirname(abspath(__file__))))
-
-import gym
 from agents.actor_critic_agents.SAC_Discrete import SAC_Discrete
 from agents.Trainer import Trainer
 from utilities.data_structures.Config import Config

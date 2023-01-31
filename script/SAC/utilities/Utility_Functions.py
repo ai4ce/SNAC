@@ -1,5 +1,4 @@
 import math
-
 import numpy as np
 from abc import ABCMeta
 import torch

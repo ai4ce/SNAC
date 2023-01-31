@@ -1,0 +1,12 @@
+device: "cuda"
+model_dir: "./model_dir_MCTS_2d_dynamic"
+log_dir: "./log_dir_MCTS_2d_dynamic"
+lr: 0.000005
+batch_size: 2000
+plan_type: 0  ##0: dense 1: sparse
+Random_seed: 1
+Replay_buffer_size: 50000
+N_iteration: 10000
+update_traget_period: 200
+rollout: 20
+UCB_CONSTANT: 0.5

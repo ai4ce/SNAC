@@ -1,0 +1,10 @@
+device: "cuda"
+model_dir: "./model_dir_DRQN_hindsight_2d_dynamic"
+log_dir: "./log_dir_DRQN_hindsight_2d_dynamic"
+lr: 0.0001
+batch_size: 64
+plan_type: 0  ##0: dense 1: sparse
+Random_seed: 1
+Replay_buffer_size: 1000
+N_iteration: 10000
+update_traget_period: 200

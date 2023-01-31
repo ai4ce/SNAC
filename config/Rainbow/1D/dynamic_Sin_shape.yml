@@ -1,0 +1,6 @@
+device: "cuda"
+lr: .00005
+plan_type: 0 ##0: sin
+Random_seed: 1
+env: "1DDynamic"
+half_window_size: 2

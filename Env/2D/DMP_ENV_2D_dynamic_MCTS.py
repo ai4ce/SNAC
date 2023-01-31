@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import gym
 import cv2
 from gym import spaces
-
+import joblib
 
 class deep_mobile_printing_2d1r(gym.Env):
-    def __init__(self, plan_choose=0):
+    def __init__(self, data_path, random_choose_paln=True):
         # plan_choose: 0 Dense triangle, 1 Sparse triangle
         self.step_size = 1
         self.plan_width = 20
@@ -28,7 +28,10 @@ class deep_mobile_printing_2d1r(gym.Env):
         self.action_dim = 5
         self.action_space = spaces.Discrete(self.action_dim)
         self.state_dim = (2 * self.HALF_WINDOW_SIZE + 1) ** 2 + 2
-        self.plan_choose = plan_choose
+        self.plan_dataset = joblib.load(data_path)
+        self.plan_dataset_len = len(self.plan_dataset)
+        self.random_choose_paln = random_choose_paln
+        self.index_for_non_random = 0
 
     def create_plan(self):
         if not (self.plan_choose == 1 or self.plan_choose == 0):
@@ -45,7 +48,7 @@ class deep_mobile_printing_2d1r(gym.Env):
             vertices = np.array([[x[0], y[0]], [x[1], y[1]], [x[2], y[2]]], np.int32)
             pts = vertices.reshape((-1, 1, 2))
             cv2.polylines(img_rgb, [pts], isClosed=True, color=(0, 0, 0))
-            if self.plan_choose == 1:
+            if self.plan_choose == 0:
                 cv2.fillPoly(img_rgb, [pts], color=(0, 0, 0))
 
             plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height,
@@ -55,7 +58,16 @@ class deep_mobile_printing_2d1r(gym.Env):
         return plan, total_area
 
     def reset(self):
-        self.plan, self.total_brick = self.create_plan()
+        if self.random_choose_paln:
+            self.index_random = np.random.randint(0, self.plan_dataset_len)
+            self.plan = self.plan_dataset[self.index_random]
+            self.total_brick = sum(sum(self.plan))
+        else:
+            self.plan = self.plan_dataset[self.index_for_non_random]
+            self.total_brick = sum(sum(self.plan))
+            self.index_for_non_random += 1
+            if self.index_for_non_random == self.plan_dataset_len:
+                self.index_for_non_random = 0
         if self.total_brick < 30:
             self.total_brick = 30
         self.input_plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
@@ -245,34 +257,43 @@ class deep_mobile_printing_2d1r(gym.Env):
             return False
         return Equal
 
-    def render(self, axe, iou_min=None, iou_average=None, iter_times=1):
+    def render(self, axe, iou_min=None, iou_average=None, iter_times=1, best_env=np.array([]), best_iou=None,
+               best_step=0, best_brick=0):
 
         axe.clear()
-        plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
-               self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
-        env_memory = self.environment_memory[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
-                     self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
-        background = np.zeros((self.plan_height, self.plan_width))
-        img = np.stack((env_memory, plan, background), axis=2)
-        plt.imshow(img)
-        plt.plot(self.position_memory[-1][1] - self.HALF_WINDOW_SIZE,
-                 self.position_memory[-1][0] - self.HALF_WINDOW_SIZE, "*")
         ###  compute IOU
         component1 = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
                      self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width].astype(bool)
         component2 = self.environment_memory[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
                      self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width].astype(bool)
-        overlap = component1 * component2  # Logical AND
-        union = component1 + component2  # Logical OR
+        overlap = component1 * component2
+        union = component1 + component2
         IOU = overlap.sum() / float(union.sum())
 
-        # Add the patch to the Axes
+        plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
+               self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
+        if best_env.any():
+            env_memory = best_env[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
+                         self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
+            IOU = best_iou
+            step = best_step
+            brick = best_brick
+        else:
+            env_memory = self.environment_memory[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
+                         self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
+            step = self.count_step
+            brick = self.count_brick
+
+        background = np.zeros((self.plan_height, self.plan_width))
+        img = np.stack((env_memory, plan, background), axis=2)
+        plt.imshow(img)
+        plt.plot(self.position_memory[-1][1] - self.HALF_WINDOW_SIZE,
+                 self.position_memory[-1][0] - self.HALF_WINDOW_SIZE, "*")
         if iou_min == None:
             iou_min = IOU
         if iou_average == None:
             iou_average = IOU
-        # axe.add_patch(rect)
-        axe.title.set_text('step=%d,used_paint=%d,IOU=%.3f' % (self.count_step, self.count_brick, IOU))
+        axe.title.set_text('step=%d,used_paint=%d,IOU=%.3f' % (step, brick, IOU))
         plt.text(0, 21.5, 'Iou_min_iter_%d = %.3f' % (iter_times, iou_min), color='red', fontsize=12)
         plt.text(0, 20.5, 'Iou_average_iter_%d = %.3f' % (iter_times, iou_average), color='blue', fontsize=12)
         axe.axis('off')

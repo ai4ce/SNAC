@@ -11,17 +11,13 @@ import time
 from matplotlib.path import Path
 import cv2
 
-
 class deep_mobile_printing_3d1r(gym.Env):
     def __init__(self, plan_choose=1):
-
         self.step_size = 1
-
         self.plan_width = 20  # X Axis
         self.plan_height = 20  # Y Axis
         self.plan_length = 10  # Z Axis
         self.z = 6
-
         self.environment_memory = None
         self.count_brick = None
         self.brick_memory = None
@@ -45,11 +41,9 @@ class deep_mobile_printing_3d1r(gym.Env):
         self.blank_size = 2  # use 0, 2, 4
         self.start = None
         self.plan_choose = plan_choose
-
         # Need to define gym spaces to use stable_baseline code
         self.action_space = spaces.Discrete(8)
         self.observation_space = spaces.Box(low=np.array([-1]*int((2*self.HALF_WINDOW_SIZE+1)**2) +[0,0]), high=np.array([99]*int((2*self.HALF_WINDOW_SIZE+1)**2) + [self.total_step,self.total_step]), dtype=np.int)
-
 
     def create_plan(self):
         out_radius = 7
@@ -60,7 +54,6 @@ class deep_mobile_printing_3d1r(gym.Env):
             in_radius = 7
         else:
             raise ValueError('0: Dense circle, 1: Sparse circle')
-
         plan = np.zeros((self.environment_height, self.environment_width))
         a = np.array([12.5, 12.5])
         circle = patches.CirclePolygon(a, out_radius)
@@ -70,12 +63,10 @@ class deep_mobile_printing_3d1r(gym.Env):
                 a = np.array([i, j])
                 if circle.contains_point(a) and not circle2.contains_point(a):
                     plan[i][j] = 1
-
             total_area = sum(sum(plan))
         plan = plan * self.z
         total_area = total_area * self.z
         return plan, total_area
-
     def reset(self):
         self.plan, self.total_brick = self.create_plan()
         self.input_plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height,
@@ -92,16 +83,12 @@ class deep_mobile_printing_3d1r(gym.Env):
         self.observation = None
         self.count_step = 0
         initial_position = [self.HALF_WINDOW_SIZE, self.HALF_WINDOW_SIZE]
-
         self.position_memory.append(initial_position)
-        
         return np.hstack(
             (self.observation_(initial_position), np.array([[self.count_brick]]), np.array([[self.count_step]]))).squeeze()
-
     def check_sur(self, position):
         # 0 left, 1 right, 2 up, 3 down
         check = [0, 0, 0, 0, 0, 0, 0, 0]
-
         observation = [self.environment_memory[position[0], position[1] - 1],
                        self.environment_memory[position[0], position[1] + 1],
                        self.environment_memory[position[0] + 1, position[1]],
@@ -113,7 +100,6 @@ class deep_mobile_printing_3d1r(gym.Env):
             elif observation[i] > 0:
                 check[i] = 1
         return check
-
     def move_step(self, position, action, step_size):
         move = 0
         if action == 0:
@@ -145,13 +131,11 @@ class deep_mobile_printing_3d1r(gym.Env):
                 else:
                     break
         return move
-
     def observation_(self, position):
         observation = self.environment_memory[
                       position[0] - self.HALF_WINDOW_SIZE:position[0] + self.HALF_WINDOW_SIZE + 1,
                       position[1] - self.HALF_WINDOW_SIZE:position[1] + self.HALF_WINDOW_SIZE + 1]
         return observation.flatten().reshape(1, -1)
-
     def clip_position(self, position):
         if position[0] <= self.HALF_WINDOW_SIZE:
             position[0] = self.HALF_WINDOW_SIZE
@@ -162,7 +146,6 @@ class deep_mobile_printing_3d1r(gym.Env):
         if position[1] >= self.plan_width + self.HALF_WINDOW_SIZE - 1:
             position[1] = self.plan_width + self.HALF_WINDOW_SIZE - 1
         return position
-
     def step(self, action):
         self.count_step += 1
         self.step_size = np.random.randint(1, 4)
@@ -195,7 +178,6 @@ class deep_mobile_printing_3d1r(gym.Env):
             position = [self.position_memory[-1][0] - step_size, self.position_memory[-1][1]]
             position = self.clip_position(position)
             self.position_memory.append(position)
-
         # building brick: 4 left_brick, 5 right_brick, 6 up_brick, 7 down_brick
         elif action > 3:
             build_brick = True
@@ -287,27 +269,21 @@ class deep_mobile_printing_3d1r(gym.Env):
         cross_area = sum(map(sum, env_memory_3d))
         iou = cross_area / (plan_area + env_area - cross_area)
         return iou
-
         pass
-
 
     def render(self, axe, axe2, iou_min=None, iou_average=None, iter_times=100,best_env=np.array([]), best_iou=None,
                best_step=0,best_brick=0,position_memo = [0,0]):
         axe.clear()
         axe2.clear()
-
         axe.set_xlim(0, self.plan_width)
         axe.set_ylim(0, self.plan_height)
         axe.set_zlim(0, self.plan_length)
-
         axe2.set_xlabel('X-axis')
         axe2.set_xlim(-1, self.plan_width)
         axe2.set_ylabel('Y-axis')
         axe2.set_ylim(-1, self.plan_height)
-
         plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height,
                self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
-
         plan_2d = np.zeros((self.plan_height, self.plan_width))
         IOU = self.iou()
         if best_env.any():
@@ -334,23 +310,16 @@ class deep_mobile_printing_3d1r(gym.Env):
 
         background = np.zeros((self.plan_height, self.plan_width))
         img = np.stack((env_memory_2d, plan_2d, background), axis=2)
-
         # plot_plan_surface
         X, Y, Z = self.plot_3d(plan, Env=False)
-
         axe.scatter(X, Y, Z, marker='s', s=40, color='r', edgecolor="k",alpha=1)
-
         x1, y1, z1 = self.plot_3d(env_memory, Env=True)
-
         width = depth = 1
         height = np.zeros_like(z1)
         if x1:
             axe.bar3d(x1, y1, height, width, depth, z1, color='b', shade=True,alpha=0.15, edgecolor="k")
-
         axe.scatter(best_posi[1] - self.HALF_WINDOW_SIZE + 0.5,
                     best_posi[0] - self.HALF_WINDOW_SIZE + 0.5, zs=0, marker="*", color='b', s=50)
-
-
         if iou_min is None:
             iou_min = IOU
         if iou_average is None:
@@ -358,13 +327,11 @@ class deep_mobile_printing_3d1r(gym.Env):
         axe.title.set_text('step=%d,used_paint=%d,IOU=%.3f' % (step, brick, IOU))
         axe2.text(0, 20, 'Iou_min_iter_%d = %.3f' % (iter_times, iou_min), color='r', fontsize=12)
         axe2.text(0, 21.2, 'Iou_average_iter_%d = %.3f' % (iter_times, iou_average), color='b', fontsize=12)
-
         axe2.axis('off')
         plt.imshow(img)
         axe2.plot(best_posi[1] - self.HALF_WINDOW_SIZE,
                   best_posi[0] - self.HALF_WINDOW_SIZE, '*', color='b')
         plt.draw()
-
 
 if __name__ == "__main__":
     env = deep_mobile_printing_3d1r(plan_choose=0)

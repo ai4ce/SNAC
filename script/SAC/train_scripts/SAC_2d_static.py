@@ -2,7 +2,6 @@ import os
 import sys
 from os.path import dirname, abspath
 sys.path.append(dirname(dirname(abspath(__file__))))
-import gym
 from agents.actor_critic_agents.SAC_Discrete import SAC_Discrete
 from agents.Trainer import Trainer
 from utilities.data_structures.Config import Config
@@ -14,6 +13,7 @@ PLAN_NAME=PLAN_LIST[PALN_CHOICE]
 config = Config()
 config.seed = 1
 config.environment = deep_mobile_printing_2d1r(plan_choose=PALN_CHOICE)
+config.environment_val = deep_mobile_printing_2d1r(plan_choose=PALN_CHOICE)
 config.num_episodes_to_run = 5000
 config.show_solution_score = False
 config.visualise_individual_results = False
@@ -26,9 +26,9 @@ config.overwrite_existing_results_file = True
 config.randomise_random_seed = False
 config.save_model = False
 OUT_FILE_NAME="SAC_2d_"+PLAN_NAME+"_seed_"+str(config.seed)
-config.save_model_path = "/mnt/NAS/home/WenyuHan/SNAC/SAC/2D/static/"+OUT_FILE_NAME+"/"
-config.file_to_save_data_results = "/mnt/NAS/home/WenyuHan/SNAC/SAC/2D/static/"+OUT_FILE_NAME+"/"+"Results_Data.pkl"
-config.file_to_save_results_graph = "/mnt/NAS/home/WenyuHan/SNAC/SAC/2D/static/"+OUT_FILE_NAME+"/"+"Results_Graph.png"
+config.save_model_path = "./SAC/2D/static/"+OUT_FILE_NAME+"/"
+config.file_to_save_data_results = "./SAC/2D/static/"+OUT_FILE_NAME+"/"+"Results_Data.pkl"
+config.file_to_save_results_graph = "./SAC/2D/static/"+OUT_FILE_NAME+"/"+"Results_Graph.png"
 if os.path.exists(config.save_model_path) == False:
     os.makedirs(config.save_model_path)
 

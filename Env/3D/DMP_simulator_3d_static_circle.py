@@ -1,16 +1,8 @@
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-import math
-import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import gym
-from gym import spaces
 import matplotlib.patches as patches
 import time
-from matplotlib.path import Path
-import cv2
-
 
 class deep_mobile_printing_3d1r(gym.Env):
     def __init__(self, plan_choose=1):

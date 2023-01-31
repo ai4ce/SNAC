@@ -2,7 +2,6 @@ import os
 import sys
 from os.path import dirname, abspath
 sys.path.append(dirname(dirname(abspath(__file__))))
-import gym
 from agents.actor_critic_agents.SAC_Discrete import SAC_Discrete
 from agents.Trainer import Trainer
 from utilities.data_structures.Config import Config
@@ -14,6 +13,7 @@ PLAN_NAME=PLAN_LIST[PALN_CHOICE]
 config = Config()
 config.seed = 5
 config.environment = deep_mobile_printing_1d1r(plan_choose=PALN_CHOICE)
+config.environment_val = deep_mobile_printing_1d1r(plan_choose=PALN_CHOICE)
 config.num_episodes_to_run = 5000
 config.show_solution_score = False
 config.visualise_individual_results = False
@@ -26,16 +26,14 @@ config.overwrite_existing_results_file = True
 config.randomise_random_seed = False
 config.save_model = False
 OUT_FILE_NAME="SAC_1d_"+PLAN_NAME+"_seed_"+str(config.seed)
-config.save_model_path = "/mnt/NAS/home/WenyuHan/SNAC/SAC/1D/static/"+OUT_FILE_NAME+"/"
-config.file_to_save_data_results = "/mnt/NAS/home/WenyuHan/SNAC/SAC/1D/static/"+OUT_FILE_NAME+"/"+"Results_Data.pkl"
-config.file_to_save_results_graph = "/mnt/NAS/home/WenyuHan/SNAC/SAC/1D/static/"+OUT_FILE_NAME+"/"+"Results_Graph.png"
+config.save_model_path = "./SAC/1D/static/"+OUT_FILE_NAME+"/"
+config.file_to_save_data_results = "./SAC/1D/static/"+OUT_FILE_NAME+"/"+"Results_Data.pkl"
+config.file_to_save_results_graph = "./SAC/1D/static/"+OUT_FILE_NAME+"/"+"Results_Graph.png"
 if os.path.exists(config.save_model_path) == False:
     os.makedirs(config.save_model_path)
 
 config.hyperparameters = {
-
     "Actor_Critic_Agents":  {
-
         "learning_rate": 0.005,
         "linear_hidden_units": [20, 10],
         "final_layer_activation": ["SOFTMAX", None],
@@ -45,7 +43,6 @@ config.hyperparameters = {
         "normalise_rewards": True,
         "exploration_worker_difference": 2.0,
         "clip_rewards": False,
-
         "Actor": {
             "learning_rate": 0.0003,
             "linear_hidden_units": [64, 64],
@@ -55,7 +52,6 @@ config.hyperparameters = {
             "gradient_clipping_norm": 5,
             "initialiser": "Xavier"
         },
-
         "Critic": {
             "learning_rate": 0.0003,
             "linear_hidden_units": [64, 64],
@@ -66,7 +62,6 @@ config.hyperparameters = {
             "gradient_clipping_norm": 5,
             "initialiser": "Xavier"
         },
-
         "min_steps_before_learning": 400,
         "batch_size": 64,
         "discount_rate": 0.99,
@@ -83,10 +78,8 @@ config.hyperparameters = {
         "do_evaluation_iterations": True
     }
 }
-
 if __name__ == "__main__":
     test = False
-    # dictPath = "/mnt/NAS/home/WenyuHan/SNAC/SAC/1D/static/"+OUT_FILE_NAME+"/"+"Actor_net_episode_1.pth"
     dictPath = None 
     AGENTS = [SAC_Discrete]
     trainer = Trainer(config, AGENTS)

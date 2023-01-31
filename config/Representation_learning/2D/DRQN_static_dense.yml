@@ -1,0 +1,11 @@
+device: "cuda"
+model_dir: "./model_dir_DRQN_Lnet_2d_static"
+log_dir: "./log_dir_DRQN_Lnet_2d_tatic"
+lr: 0.0001
+batch_size: 64
+plan_type: 0  ##0: dense 1: sparse
+Random_seed: 1
+Replay_buffer_size: 1000
+N_iteration: 10000
+update_traget_period: 200
+pretrainmodel: model_staticdense_01000000.pth

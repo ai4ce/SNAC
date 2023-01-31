@@ -34,21 +34,16 @@ save_path = "mnt/NAS/home/WenyuHan/SNAC/DRQN_Hindsight/3D/plot/"
 load_path = "/mnt/NAS/home/WenyuHan/SNAC/DRQN_Hindsight/3D/log/static/"+OUT_FILE_NAME+"/"
 if os.path.exists(save_path) == False:
     os.makedirs(save_path)
-
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 print('3D_Static')
-
 iou_all_average = 0
 iou_all_min = 1
-
 env = deep_mobile_printing_3d1r(plan_choose=PALN_CHOICE)
 N_iteration_test = 500
 Action_dim = env.action_dim
 State_dim = env.state_dim
 hidden_state_dim = 256
 Time_step = 20
-
-
 
 def iou(environment_memory,environment_plan,HALF_WINDOW_SIZE,plan_height,plan_width):
     component1=environment_plan[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
@@ -60,22 +55,16 @@ def iou(environment_memory,environment_plan,HALF_WINDOW_SIZE,plan_height,plan_wi
     IOU = overlap.sum()/float(union.sum())
     return IOU
 
-
 def get_and_init_FC_layer(din, dout):
     li = nn.Linear(din, dout)
     li.weight.data.normal_(0, 0.1)
     return li
 
-
 class Q_NET(nn.Module):
     def __init__(self, out_size, hidden_size):
         super(Q_NET, self).__init__()
-
         self.out_size = out_size
         self.hidden_size = hidden_size
-
-        
-
         self.fc_1 = get_and_init_FC_layer(State_dim, 64)
         self.fc_2 = get_and_init_FC_layer(64, 128)
         self.fc_3 = get_and_init_FC_layer(128, 128)
@@ -83,19 +72,14 @@ class Q_NET(nn.Module):
         self.adv = get_and_init_FC_layer(hidden_size, self.out_size)
         self.val = get_and_init_FC_layer(hidden_size, 1)
         self.relu = nn.ReLU()
-
     def forward(self, x, bsize, time_step, hidden_state, cell_state):
-        
-
         x = x.view(bsize * time_step, State_dim)
-
         x = self.fc_1(x)
         x = self.relu(x)
         x = self.fc_2(x)
         x = self.relu(x)
         x = self.fc_3(x)
         x = self.relu(x)
-        
         x = x.view(bsize, time_step, 128)
         lstm_out = self.rnn(x, (hidden_state, cell_state))
         out = lstm_out[0][:, time_step - 1, :]
@@ -106,15 +90,10 @@ class Q_NET(nn.Module):
         qout = val_out.expand(bsize, self.out_size) + (
                     adv_out - adv_out.mean(dim=1).unsqueeze(dim=1).expand(bsize, self.out_size))
         return qout, (h_n, c_n)
-
     def init_hidden_states(self, bsize):
         h = torch.zeros(1, bsize, self.hidden_size).float().to(device)
         c = torch.zeros(1, bsize, self.hidden_size).float().to(device)
         return h, c
-
-
-
-
 
 class DQN_AGNET():
     def __init__(self, device):
@@ -127,22 +106,15 @@ class DQN_AGNET():
         self.loss = nn.SmoothL1Loss()
         self.loss_his = []
         self.greedy_epsilon = 0.2
-
     def choose_action(self, s, hidden_state, cell_state):
-
         state = torch.from_numpy(s).float().to(self.device)
-        
         model_out = self.Eval_net.forward(state, bsize=1, time_step=1, hidden_state=hidden_state,
                                             cell_state=cell_state)
         out = model_out[0]
         action = int(torch.argmax(out[0]))
         hidden_state = model_out[1][0]
         cell_state = model_out[1][1]
-
         return action, hidden_state, cell_state
-
-    
-
 
 test_agent=DQN_AGNET(device)
 log_path = load_path+ "Eval_net_episode_"
@@ -157,14 +129,11 @@ best_env = np.array([])
 fig = plt.figure(figsize=[10, 5])
 ax1 = fig.add_subplot(1, 2, 1, projection='3d')
 ax2 = fig.add_subplot(1, 2, 2)
-
 for i in range(N_iteration_test):
     state = env.reset()
     reward_test=0
     print('Ep:',i)
-
     hidden_state, cell_state = test_agent.Eval_net.init_hidden_states(bsize=1)
-
     while True:
         action, hidden_state_next, cell_state_next = test_agent.choose_action(state, hidden_state, cell_state)
         state_next, r, done = env.step(action)
@@ -175,7 +144,6 @@ for i in range(N_iteration_test):
         hidden_state, cell_state = hidden_state_next, cell_state_next
     iou_test=env.iou()
     iou_history.append(iou_test)
-
     iou_min = min(iou_min,iou_test)
     if iou_test > best_iou:
         best_iou = iou_test
@@ -185,8 +153,6 @@ for i in range(N_iteration_test):
         best_tb = env.total_brick
         best_env = env.environment_memory
         best_posi = env.position_memory[-1]
-
-
     iou_test_total+=iou_test
     reward_test_total+=reward_test
 STD = statistics.stdev(iou_history)
@@ -195,27 +161,10 @@ iou_test_total=iou_test_total/N_iteration_test
 secs = int(time.time() - start_time_test)
 mins = secs / 60
 secs = secs % 60
-
 iou_all_average += iou_test_total
 iou_all_min = min(iou_min,iou_all_min)
-
-# total_reward=0
-# state=env.reset()
-# env_plan=env.input_plan
-
-# print("total_brick:", env.total_brick)
-# print('iou_his:',iou_history)
-# print('iou_min:',min(iou_history))
-# # env.render(ax)
-# hidden_state, cell_state = test_agent.Eval_net.init_hidden_states(bsize=1)
-# if best_iou>0:
-#     env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
-#                 best_iou=best_iou,best_step=best_step,best_brick=best_brick,position_memo = best_posi)
-# else:
-#     env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
-# plt.savefig(save_path + "Plan" + str(plan_choose) + '.png')
-
-
+env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,
+                best_iou=best_iou,best_step=best_step,best_brick=best_brick,position_memo = best_posi)
 
 iou_all_average = iou_all_average
 print('#### Finish #####')

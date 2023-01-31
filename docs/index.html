@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <title>SNAC</title>
+
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- <base href="/"> -->
+
+    <!-- <link rel="icon" type="image/png" href="FLAT.png"> -->
+    <!-- Place favicon.ico in the root directory -->
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.css">
+    <link rel="stylesheet" href="app.css">
+
+    <link rel="stylesheet" href="bootstrap.min.css">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110862391-3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'UA-110862391-3');
+    </script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.3/clipboard.min.js"></script>
+
+    <script src="app.js"></script>
+</head>
+
+<body>
+<div class="container" id="main">
+    <div class="row">
+        <h1 class="col-md-12 text-center">
+            Learning Simultaneous Navigation and Construction in Grid Worlds </br>
+<!--            <small>-->
+<!--                ICLR 2023-->
+<!--            </small>-->
+        </h1>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <ul class="list-inline">
+                <li>
+                    <a href="https://www.linkedin.com/in/wenyuhan0616">
+                        Wenyu Han
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.linkedin.com/in/haoran-lucas-ng-4053471a0/">
+                        Haoran Wu
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.linkedin.com/in/eisukeh/">
+                        Eisuke Hirota
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.alexandergao.com/">
+                        Alexander Gao
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.lerrelpinto.com/">
+                        Lerrel Pinto
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wp.nyu.edu/machinesinmotion/89-2/">
+                        Ludovic Righetti
+                    </a>
+                </li>
+                <li>
+                    <a href="https://engineering.nyu.edu/faculty/chen-feng">
+                        Chen Feng
+                    </a>
+                </li>
+            </ul>
+            New York University
+            <br>
+        </div>
+    </div>
+
+    <br>
+    <br>
+
+    <div class="row">
+        <div class="col-xs-4 col-sm-2 col-sm-offset-3 text-center">
+            <a href="https://ai4ce.github.io">
+                <image src="ai4ce.png" height="50px"></image>
+                <br>
+                <h4><strong>Lab</strong></h4>
+            </a>
+        </div>
+        <div class="col-xs-4 col-sm-2 text-center">
+            <a href="https://openreview.net/forum?id=NEtep2C7yD">
+                <image style='border:1px solid #000000' src="paper.png" height="50px"></image>
+                <br>
+                <h4><strong>Paper</strong></h4>
+            </a>
+        </div>
+        <div class="col-xs-4 col-sm-2 text-center">
+            <a href="https://github.com/ai4ce/SNAC">
+                <image src="github.png" height="50px"></image>
+                <br>
+                <h4><strong>Experiments</strong></h4>
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <h3>
+                Abstract
+            </h3>
+            We propose to study a new learning task, mobile construction, to enable an agent
+            to build designed structures in 1/2/3D grid worlds while navigating in the same
+            evolving environments. Unlike existing robot learning tasks such as visual navigation
+            and object manipulation, this task is challenging because of the interdependence
+            between accurate localization and strategic construction planning. In
+            pursuit of generic and adaptive solutions to this partially observable Markov decision
+            process (POMDP) based on deep reinforcement learning (RL), we design
+            a Deep Recurrent Q-Network (DRQN) with explicit recurrent position estimation
+            in this dynamic grid world. Our extensive experiments show that pre-training this
+            position estimation module before Q-learning can significantly improve the construction
+            performance measured by the intersection-over-union score, achieving
+            the best results in our benchmark of various baselines including model-free and
+            model-based RL, a handcrafted SLAM-based policy, and human players.
+            <br>
+            <br>
+            <div class="col-md-offset-0.5 text-center">
+                <image src="figure1.png" width="700"></image>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <h3>
+                Mobile Construction Task
+            </h3>
+            Intelligent agents, from animal architects (e.g., mound-building termites and burrowing rodents)
+            to human beings, can simultaneously build structures while navigating inside such a dynamically
+            evolving environment, revealing robust and coordinated spatial skills like localization, mapping, and
+            planning. Can we create artificial intelligence (AI) to perform similar mobile construction tasks?
+<br>
+<br>
+            To handcraft such an AI using existing robotics techniques is difficult and non-trivial. A fundamental
+challenge is the tight interdependence of robot localization and long-term planning for environment
+modification. If GPS and techniques alike are not available (often due to occlusions), robots have
+to rely on simultaneous localization and mapping (SLAM) or structure from motion (SfM) for pose
+estimation. But mobile construction violates the basic static-environment assumption in classic visual
+SLAM methods, and even challenges SfM methods designed for dynamic scenes (Saputra et al.,
+2018). Thus, we need to tackle the interdependence challenge to strategically modify the environment
+while efficiently updating a memory of the evolving structure in order to perform accurate
+localization and construction.
+            <br>
+            <br>
+            Deep reinforcement learning (DRL) offers another possibility, especially given its recent success in
+game playing and robot control. Can deep networks learn a generic and adaptive policy that controls
+the AI to build calculated structures as temporary localization landmarks which eventually evolve
+into the designed one? To answer this question, we design an efficient simulation environment with
+a series of mobile construction tasks in 1/2/3D grid worlds. This reasonably simplifies the environment
+dynamics and sensing models while keeping the tasks nontrivial, and allows us to focus on the
+aforementioned interdependence challenge before advancing to other real-world complexities.
+<br>
+<br>
+            <div class="col-xs-4 col-sm-3 text-center">
+                <image class="center" src="1d_example_crop.png" width="150"></image>
+            </div>
+            <div class="col-xs-4 col-sm-4 text-center">
+                <image class="center" src="2d_example_crop.png" width="150"></image>
+            </div>
+            <div class="col-xs-4 col-sm-3 text-center">
+                <image class="center" src="3d_example_crop.png" width="300"></image>
+            </div>
+        </div>
+    </div>
+
+    <br>
+    <br>
+
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <h3>
+                Recurrent Position Estimation
+            </h3>
+            After formulating mobile construction tasks, we benchmarked our naive model-free DRL baselines
+            on these tasks. We found that these DRL policies perform worse than our human baselines, especially
+            on 2D and 3D tasks. We believe the low performance is due to the difficulty in learning
+            meaningful representations and an effective control policy jointly via RL training alone. Especially,
+            the aforementioned interdependence challenge of mobile construction tasks requires the agent to localize
+            itself in a dynamic environment where the surrounding structure could change after the agent
+            build a new brick. Inspired by some recent studies (Stooke et al., 2021; Lample & Chaplot, 2017;
+            Jaderberg et al., 2016; Mirowski et al., 2016) which decouple representation learning from RL, we
+            propose our method which combines (1) a pre-trained localization network (L-Net) to estimate the
+            current agent position and (2) a DRQN to select the best action based on the predicted positions
+            and observations.
+            <br>
+            <br>
+            <image src="overall_pipeline.png" width="100%" class="center"></image>
+            <!-- <image src="white2.png" width="100%" class="center"></image>
+            <image src="white3.png" width="100%" class="center"></image> -->
+            <br>
+            <br>
+            <br>
+            We can see the difference of performance between DRQN and DRQN+Lnet in constant/variable dense environments:
+            <div style="margin-bottom:6cm;">
+                <div class="col-xs-3 col-sm-3 text-center">
+                    <video width="200" height="200" autoplay loop controls muted > -->
+                        <source src="drqn_1d_constant.mp4" type="video/mp4"/>
+                    </video>
+                </div>
+                <div class="col-xs-4 col-sm-4 text-center">
+                    <video width="200" height="200" autoplay loop controls muted > -->
+                        <source src="drqn_2d_constant_dense.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="col-xs-4 col-sm-3 text-center">
+                    <video width="300" height="200" autoplay loop controls muted > -->
+                        <source src="drqn_3d_constant_dense.mp4" type="video/mp4"/>
+                    </video>
+                </div>
+            </div>
+            <p align="center">(a) DRQN performance in 1/2/3d constant (dense) environments</p>
+
+
+            <div style="margin-bottom:6cm;">
+                <div class="col-xs-3 col-sm-3 text-center">
+                    <video width="200" height="200" autoplay loop controls muted > -->
+                        <source src="drqn+lnet_1d_constant.mp4" type="video/mp4"/>
+                    </video>
+                </div>
+                <div class="col-xs-4 col-sm-4 text-center">
+                    <video width="200" height="200" autoplay loop controls muted > -->
+                        <source src="drqn+lnet_2d_constant_dense.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="col-xs-4 col-sm-3 text-center">
+                    <video width="300" height="200" autoplay loop controls muted > -->
+                        <source src="drqn+lnet_3d_constant_dense.mp4" type="video/mp4"/>
+                    </video>
+                </div>
+            </div>
+            <p align="center">(b) DRQN+Lnet performance in 1/2/3d constant (dense) environments</p>
+
+
+            <div style="margin-bottom:6cm;">
+                <div class="col-xs-3 col-sm-3 text-center">
+                    <video width="200" height="200" autoplay loop controls muted > -->
+                        <source src="drqn_1d_variable.mp4" type="video/mp4"/>
+                    </video>
+                </div>
+                <div class="col-xs-4 col-sm-4 text-center">
+                    <video width="200" height="200" autoplay loop controls muted > -->
+                        <source src="drqn_2d_variable_dense.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="col-xs-4 col-sm-3 text-center">
+                    <video width="300" height="200" autoplay loop controls muted > -->
+                        <source src="drqn_3d_variable_dense.mp4" type="video/mp4"/>
+                    </video>
+                </div>
+            </div>
+            <p align="center">(c) DRQN performance in 1/2/3d variable (dense) environments</p>
+
+            <div style="margin-bottom:6cm;">
+                <div class="col-xs-3 col-sm-3 text-center">
+                    <video width="200" height="200" autoplay loop controls muted > -->
+                        <source src="drqn+lnet_1d_variable.mp4" type="video/mp4"/>
+                    </video>
+                </div>
+                <div class="col-xs-4 col-sm-4 text-center">
+                    <video width="200" height="200" autoplay loop controls muted > -->
+                        <source src="drqn+lnet_2d_variable_dense.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="col-xs-4 col-sm-3 text-center">
+                    <video width="300" height="200" autoplay loop controls muted > -->
+                        <source src="drqn+lnet_3d_variable_dense.mp4" type="video/mp4"/>
+                    </video>
+                </div>
+            </div>
+            <p align="center">(d) DRQN+Lnet performance in 1/2/3d variable (dense) environments</p>
+        </div>
+    </div>
+
+    <br>
+    <br>
+
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <h3>
+                Benchmarking
+            </h3>
+            We conduct comprehensive experiments to test baselines and our proposed method on mobile construction
+            tasks. The baselines consist of DQN, DRQN, PPO, DQN+MCTS, Handcrafted, and Human. Our contributions consist
+            of DQN+Lnet and DRQN+Lnet.
+            <br>
+            <br>
+            <image src="experiment_results_new.png" width="100%" class="center"></image>
+            <br>
+            <br>
+        </div>
+    </div>
+
+    <br>
+    <br>
+
+        <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <h3>
+                Ablation Study
+            </h3>
+            We performed ablation studies to comprehensively analyze the reasons associated with the poor
+            RL baseline performances on 2D and 3D tasks. We identify four potential challenges: (1) the 
+            obstacles in 3D environments, (2) the lack of localization information, (3) the step size d 
+            uncertainty, and (4) the lack of landmarks in the environment for localization.
+            <br>
+            <br>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h3>
+                    Best Performances of Each Algorithm
+                </h3>
+                <image src="best_demos.jpg" width="100%" class="center"></image>
+                <br>
+                <br>
+            </div>
+        <div class="row">
+
+        <div class="col-md-8 col-md-offset-2">
+            <h3>
+                Acknowledgement
+            </h3>
+            The research is supported by NSF CPS program under CMMI-1932187. The authors gratefully thank our 
+            human test participants and the helpful comments from Bolei Zhou, Zhen Liu, and the anonymous reviewers,
+             and also Congcong Wen for paper revision. The website template is by <a href="https://djl11.github.io/">Daniel Lenton</a>.
+        </div>
+
+    </div>
+
+
+    <br>
+    <br>
+
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <h3>
+                BibTeX
+            </h3>
+            <div class="form-group col-md-10 col-md-offset-1">
+                <textarea id="bibtex" class="form-control" readonly>
+@inproceedings{
+    anonymous2023learning,
+    title={Learning Simultaneous Navigation and Construction in Grid Worlds},
+    author={Anonymous},
+    booktitle={Submitted to The Eleventh International Conference on Learning Representations },
+    year={2023},
+    url={https://openreview.net/forum?id=NEtep2C7yD},
+    note={under review}
+}
+                </textarea>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

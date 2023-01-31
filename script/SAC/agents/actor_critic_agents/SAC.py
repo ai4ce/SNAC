@@ -8,12 +8,13 @@ from torch.distributions import Normal
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from environments.DMP_Env_1D_dynamic_test import deep_mobile_printing_1d1r
+import pickle
+import os
+# from environments.DMP_Env_1D_dynamic_test import deep_mobile_printing_1d1r
 # from environments.DMP_Env_2D_static import deep_mobile_printing_2d1r
-from environments.DMP_Env_2D_dynamic_test import deep_mobile_printing_2d1r
+# from environments.DMP_Env_2D_dynamic_test import deep_mobile_printing_2d1r
 # from environments.DMP_simulator_3d_static_circle_test import deep_mobile_printing_3d1r
 # from environments.DMP_simulator_3d_dynamic_triangle_test import deep_mobile_printing_3d1r
-
 LOG_SIG_MAX = 2
 LOG_SIG_MIN = -20
 TRAINING_EPISODES_PER_EVAL_EPISODE = 10
@@ -91,114 +92,129 @@ class SAC(Base_Agent):
             while not self.done:
                 self.episode_step_number_val += 1
                 self.action = self.pick_action(eval_ep)
-                
                 self.conduct_action(self.action)
                 if self.time_for_critic_and_actor_to_learn():
                     for _ in range(self.hyperparameters["learning_updates_per_learning_session"]):
                         self.learn()
                 mask = False if self.episode_step_number_val >= 1000. else self.done
+              
                 if not eval_ep: self.save_experience(experience=(self.state, self.action, self.reward, self.next_state, mask))
                 self.state = self.next_state
                 self.global_step_number += 1
-            print(self.total_episode_score_so_far)
-            if eval_ep: self.print_summary_of_latest_evaluation_episode()
             if eval_ep:
+                print("+++++++++++++++++++++ eval ++++++++++++++++++++++++++++")
+                self.environment = self.config.environment_val
+                # self.environment.seed(self.config.seed)
+                self.state = self.environment.reset()
+                self.next_state = None
+                self.action = None
+                self.reward = None
+                self.done = False
+                self.total_episode_score_so_far = 0
+                while not self.done:
+                    self.action = self.pick_action(eval_ep)
+                    self.conduct_action(self.action)
+                    self.state = self.next_state
                 iou_test = self.environment.iou()
                 # iou_test=self.iou(self.environment.environment_memory,np.argmax(self.environment.one_hot)+1)
                 print('\nEpodise: ', self.episode_number,'| Ep_reward_test:', self.reward)
                 print('\nEpodise: ', self.episode_number,'| Ep_IOU_test: ', iou_test)
                 self.reward_history_test.append(self.reward)
                 self.iou_history_test.append(iou_test)
+                self.print_summary_of_latest_evaluation_episode()
             self.episode_number += 1
         else:
             eval_ep=True
 
-            '''
             ########################3d dynamic test################################          
             print("Testing")
 
-            plan_choose = self.environment.plan_choose
-            print(f"PLAN = {plan_choose}")
+            # plan_choose = self.environment.plan_choose
+            plan_choose = "sparse"
+            # print(f"PLAN = {plan_choose}")
             iou_all_average = 0
             iou_all_min = 1
-            for test_set in range(10):
-                env = deep_mobile_printing_3d1r(plan_choose=plan_choose, test_set=test_set)
+            iou_history = []
+            env = self.config.environment
+            save_path = "./plots/"
+            if os.path.exists(save_path) == False:
+                os.makedirs(save_path, exist_ok=True)
 
 
-                def iou(environment_memory,environment_plan,HALF_WINDOW_SIZE,plan_height,plan_width):
-                    component1=environment_plan[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
-                                    HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
-                    component2=environment_memory[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
-                                    HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
-                    overlap = component1*component2 # Logical AND
-                    union = component1 + component2 # Logical OR
-                    IOU = overlap.sum()/float(union.sum())
-                    return IOU
+            def iou(environment_memory,environment_plan,HALF_WINDOW_SIZE,plan_height,plan_width):
+                component1=environment_plan[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
+                                HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
+                component2=environment_memory[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
+                                HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
+                overlap = component1*component2 # Logical AND
+                union = component1 + component2 # Logical OR
+                IOU = overlap.sum()/float(union.sum())
+                return IOU
 
-                print(test_set)
-                N_iteration_test = 200
-                best_iou = 0
-                iou_test_total = 0
-                iou_min = 1
-                reward_test_total = 0
-                start_time_test = time.time()
+            N_iteration_test = 500
+            best_iou = 0
+            iou_test_total = 0
+            iou_min = 1
+            reward_test_total = 0
+            start_time_test = time.time()
 
-                fig = plt.figure(figsize=[10, 5])
-                ax1 = fig.add_subplot(1, 2, 1, projection='3d')
-                ax2 = fig.add_subplot(1, 2, 2)
+            fig = plt.figure(figsize=[10, 5])
+            ax1 = fig.add_subplot(1, 2, 1, projection='3d')
+            ax2 = fig.add_subplot(1, 2, 2)
 
-                for ep in range(N_iteration_test):
-                    obs = env.reset()
-                    reward_test = 0
+            for ep in range(N_iteration_test):
+                obs = env.reset()
+                reward_test = 0
+                self.state = obs
+                while True:
+                    self.action = self.pick_action(eval_ep)
+                    # self.conduct_action(self.action)
+                    obs, r, done = env.step(self.action)
                     self.state = obs
-                    while True:
-                        self.action = self.pick_action(eval_ep)
-                        self.conduct_action(self.action)
-                        obs, r, done = env.step(self.action)
-                        self.state = obs
-                        reward_test += r
-                        if done:
-                            break
+                    reward_test += r
+                    if done:
+                        break
 
-                    iou_test = iou(env.environment_memory,env.plan,env.HALF_WINDOW_SIZE,env.plan_height,env.plan_width)
-                    iou_min = min(iou_min, iou_test)
+                iou_test = iou(env.environment_memory,env.plan,env.HALF_WINDOW_SIZE,env.plan_height,env.plan_width)
+                iou_min = min(iou_min, iou_test)
+                iou_history.append(iou_test)
 
-                    if iou_test > best_iou:
-                        best_iou = iou_test
-                        best_plan = env.plan
-                        best_step = env.count_step
-                        best_brick = env.count_brick
-                        best_tb = env.total_brick
-                        best_env = env.environment_memory
-                        env.render(ax1, ax2)
-                        save_path = "plots/"
-                        plt.savefig(save_path+"SAC_Plan"+str(test_set)+'_'+str(self.environment.plan_choose)+'_good.png')
+                if iou_test > best_iou:
+                    best_iou = iou_test
+                    best_plan = env.plan
+                    best_step = env.count_step
+                    best_brick = env.count_brick
+                    best_tb = env.total_brick
+                    best_env = env.environment_memory
+                    env.render(ax1, ax2)
+                    # save_path = "plots/"
+                    # plt.savefig(save_path+"SAC_Plan"+str(test_set)+'_'+str(self.environment.plan_choose)+'_good.png')
 
-                    iou_test_total += iou_test
-                    reward_test_total += reward_test
+                iou_test_total += iou_test
+                reward_test_total += reward_test
 
-                reward_test_total = reward_test_total / N_iteration_test
-                iou_test_total = iou_test_total / N_iteration_test
-                secs = int(time.time() - start_time_test)
-                mins = secs // 60
-                secs = secs % 60
-                print(f"time = {mins} min {secs} sec")
-                print(f"iou = {iou_test_total}")
-                print(f"reward_test = {reward_test_total}")
-                if best_iou>0:
-                    env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
-                else:
-                    env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
-                save_path = "plots/"
-                plt.savefig(save_path+"SAC_Plan"+str(test_set)+'_'+str(self.environment.plan_choose)+'_summary.png')
+            reward_test_total = reward_test_total / N_iteration_test
+            iou_test_total = iou_test_total / N_iteration_test
+            secs = int(time.time() - start_time_test)
+            mins = secs // 60
+            secs = secs % 60
+            print(f"time = {mins} min {secs} sec")
+            print(f"iou = {iou_test_total}")
+            print(f"reward_test = {reward_test_total}")
+            if best_iou>0:
+                env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
+            else:
+                env.render(ax1,ax2,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
+            plt.savefig(save_path+"SAC_3d_dense_seed"+str(self.config.seed)+'_summary.png')
+            with open(save_path+"SAC_3d_dense_seed"+str(self.config.seed)+'_summary.pkl','wb') as f:
+                pickle.dump(iou_history, f)
 
-                iou_all_average += iou_test_total
-                iou_all_min = min(iou_min,iou_all_min)
+            iou_all_average += iou_test_total
+            iou_all_min = min(iou_min,iou_all_min)
 
             iou_all_average = iou_all_average/10
             print('iou_all_average',iou_all_average)
             print('iou_all_min',iou_all_min)
-            '''
 
             
 
@@ -364,77 +380,82 @@ class SAC(Base_Agent):
 
 
             
-            # ########################2d dynamic test################################
+            ########################2d dynamic test################################
             # print("Testing")
 
             
-            # print(f"PLAN = {self.environment.plan_choose}")
+            # # print(f"PLAN = {self.environment.plan_choose}")
             # iou_all_average = 0
             # iou_all_min = 1
-            # for test_set in range(10):
-            #     test_set = 6
-            #     env = deep_mobile_printing_2d1r(plan_choose=self.environment.plan_choose, test_set=test_set)
+            # iou_history = []
+            # env = self.config.environment
+            # save_path = "./plots/"
+            # if os.path.exists(save_path) == False:
+            #     os.makedirs(save_path, exist_ok=True)
 
-            #     def iou(environment_memory,environment_plan,HALF_WINDOW_SIZE,plan_height,plan_width):
-            #         component1=environment_plan[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
-            #                             HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
-            #         component2=environment_memory[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
-            #                             HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
-            #         overlap = component1*component2 # Logical AND
-            #         union = component1 + component2 # Logical OR
-            #         IOU = overlap.sum()/float(union.sum())
-            #         return IOU
 
-            #     print(test_set)
-            #     N_iteration_test = 200
-            #     best_iou = 0
-            #     iou_test_total = 0
-            #     iou_min = 1
-            #     reward_test_total = 0
-            #     start_time_test = time.time()
+            # def iou(environment_memory,environment_plan,HALF_WINDOW_SIZE,plan_height,plan_width):
+            #     component1=environment_plan[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
+            #                         HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
+            #     component2=environment_memory[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
+            #                         HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
+            #     overlap = component1*component2 # Logical AND
+            #     union = component1 + component2 # Logical OR
+            #     IOU = overlap.sum()/float(union.sum())
+            #     return IOU
 
-            #     fig = plt.figure(figsize=(5, 5))
-            #     ax = fig.add_subplot(1, 1, 1)
-            #     for ep in range(N_iteration_test):
-            #         obs = env.reset()
-            #         reward_test = 0
+            # N_iteration_test = 500
+            # best_iou = 0
+            # iou_test_total = 0
+            # iou_min = 1
+            # reward_test_total = 0
+            # start_time_test = time.time()
+
+            # fig = plt.figure(figsize=(5, 5))
+            # ax = fig.add_subplot(1, 1, 1)
+            # for ep in range(N_iteration_test):
+            #     obs = env.reset()
+            #     reward_test = 0
+            #     self.state = obs
+            #     while True:
+            #         self.action = self.pick_action(eval_ep)
+            #         # self.conduct_action(self.action)
+            #         # action, _ = test_agent.predict(obs)
+            #         # obs, r, done, info = env.step(self.action)
+            #         obs, r, done = env.step(self.action)
             #         self.state = obs
-            #         while True:
-            #             self.action = self.pick_action(eval_ep)
-            #             self.conduct_action(self.action)
-            #             # action, _ = test_agent.predict(obs)
-            #             obs, r, done, info = env.step(self.action)
-            #             self.state = obs
-            #             reward_test += r
-            #             if done:
-            #                 break
+            #         reward_test += r
+            #         if done:
+            #             break
 
-            #         iou_test = iou(env.environment_memory,env.plan,env.HALF_WINDOW_SIZE,env.plan_height,env.plan_width)
-            #         iou_min = min(iou_min, iou_test)
+            #     iou_test = iou(env.environment_memory,env.plan,env.HALF_WINDOW_SIZE,env.plan_height,env.plan_width)
+            #     iou_min = min(iou_min, iou_test)
+            #     iou_history.append(iou_test)
 
-            #         if iou_test > best_iou:
-            #             best_iou = iou_test
-            #             best_plan = env.plan
-            #             best_tb = env.total_brick
-            #             env.render(ax)
-            #             save_path = "plots/"
-            #             plt.savefig(save_path+"SAC_Plan"+str(test_set)+'_'+str(self.environment.plan_choose)+'_good.png')
-            #         iou_test_total += iou_test
-            #         reward_test_total += reward_test
+            #     if iou_test > best_iou:
+            #         best_iou = iou_test
+            #         best_plan = env.plan
+            #         best_tb = env.total_brick
+            #         env.render(ax)
+            #         # save_path = "plots/"
+            #         # plt.savefig(save_path+"SAC_Plan"+str(test_set)+'_'+str(self.environment.plan_choose)+'_good.png')
+            #     iou_test_total += iou_test
+            #     reward_test_total += reward_test
 
-            #     reward_test_total = reward_test_total / N_iteration_test
-            #     iou_test_total = iou_test_total / N_iteration_test
-            #     secs = int(time.time() - start_time_test)
-            #     mins = secs // 60
-            #     secs = secs % 60
-            #     print(f"time = {mins} min {secs} sec")
-            #     print(f"iou = {iou_test_total}")
-            #     print(f"reward_test = {reward_test_total}")
-            #     env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
-            #     iou_all_average += iou_test_total
-            #     iou_all_min = min(iou_min,iou_all_min)
-            #     save_path = "plots/"
-            #     plt.savefig(save_path+"SAC_Plan"+str(test_set)+'_'+str(self.environment.plan_choose)+'_summary.png')
+            # reward_test_total = reward_test_total / N_iteration_test
+            # iou_test_total = iou_test_total / N_iteration_test
+            # secs = int(time.time() - start_time_test)
+            # mins = secs // 60
+            # secs = secs % 60
+            # print(f"time = {mins} min {secs} sec")
+            # print(f"iou = {iou_test_total}")
+            # print(f"reward_test = {reward_test_total}")
+            # env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
+            # iou_all_average += iou_test_total
+            # iou_all_min = min(iou_min,iou_all_min)
+            # plt.savefig(save_path+"SAC_dense_seed"+str(self.config.seed)+'_summary.png')
+            # with open(save_path+"SAC_dense_seed"+str(self.config.seed)+'_summary.pkl','wb') as f:
+            #     pickle.dump(iou_history, f)
 
             # iou_all_average = iou_all_average/10
             # print('iou_all_average',iou_all_average)
@@ -519,172 +540,117 @@ class SAC(Base_Agent):
             save_path = "plots/"
             plt.savefig(save_path+"SAC_Plan"+str(self.environment.plan_choose)+'_summary.png')
             '''
+              
+            # ########################1d dynamic test################################
+
+            # iou_all_average = 0
+            # iou_all_min = 1
             
+            # plan_choose = 8
+            # print(plan_choose)
+            # env = deep_mobile_printing_1d1r(plan_choose=plan_choose)
+            # N_iteration_test = 500
+            # best_iou = 0
+            # iou_test_total = 0
+            # iou_min = 1
+            # reward_test_total = 0
+            # start_time_test = time.time()
 
+            # fig = plt.figure(figsize=(5, 5))
+            # ax = fig.add_subplot(1, 1, 1)
+            # for ep in range(N_iteration_test):
+            #     obs = env.reset()
+            #     reward_test = 0
+            #     self.state = obs
+            #     while True:
+            #         self.action = self.pick_action(eval_ep)
+            #         obs, r, done  = env.step(self.action)
+            #         self.state = obs
+            #         reward_test += r
+            #         if done:
+            #             break
 
+            #     iou_test = env.iou()
+            #     iou_min = min(iou_min, iou_test)
 
+            #     if iou_test > best_iou:
+            #         best_iou = iou_test
+            #         best_plan = env.plan
+            #         best_tb = env.total_brick
+            #         env.render(ax)
+            #         save_path = self.config.save_model_path
+            #         plt.savefig(save_path+"SAC_Plan"+str(plan_choose)+'_good.png')
+            #     iou_test_total += iou_test
+            #     reward_test_total += reward_test
 
+            # reward_test_total = reward_test_total / N_iteration_test
+            # iou_test_total = iou_test_total / N_iteration_test
+            # secs = int(time.time() - start_time_test)
+            # mins = secs // 60
+            # secs = secs % 60
+            # print(f"time = {mins} min {secs} sec")
+            # print(f"iou = {iou_test_total}")
+            # print(f"reward_test = {reward_test_total}")
+            # env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
+            # iou_all_average += iou_test_total
+            # iou_all_min = min(iou_min,iou_all_min)
+            # save_path = self.config.save_model_path
+            # plt.savefig(save_path+"SAC_Plan"+str(plan_choose)+'_summary.png')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-
-            '''
-            ########################1d dynamic test################################
-
-            iou_all_average = 0
-            iou_all_min = 1
-            for plan_choose in range(10):
-                plan_choose = 8
-                print(plan_choose)
-                env = deep_mobile_printing_1d1r(plan_choose=plan_choose)
-                N_iteration_test = 200
-                best_iou = 0
-                iou_test_total = 0
-                iou_min = 1
-                reward_test_total = 0
-                start_time_test = time.time()
-
-                fig = plt.figure(figsize=(5, 5))
-                ax = fig.add_subplot(1, 1, 1)
-                for ep in range(N_iteration_test):
-                    obs = env.reset()
-                    reward_test = 0
-                    self.state = obs
-                    while True:
-                        self.action = self.pick_action(eval_ep)
-                        self.conduct_action(self.action)
-                        obs, r, done  = env.step(self.action)
-                        self.state = obs
-                        reward_test += r
-                        if done:
-                            break
-
-                    iou_test = env.iou()
-                    iou_min = min(iou_min, iou_test)
-
-                    if iou_test > best_iou:
-                        best_iou = iou_test
-                        best_plan = env.plan
-                        best_tb = env.total_brick
-                        env.render(ax)
-                        save_path = "plots/"
-                        plt.savefig(save_path+"SAC_Plan"+str(plan_choose)+'_good.png')
-                    iou_test_total += iou_test
-                    reward_test_total += reward_test
-
-                reward_test_total = reward_test_total / N_iteration_test
-                iou_test_total = iou_test_total / N_iteration_test
-                secs = int(time.time() - start_time_test)
-                mins = secs // 60
-                secs = secs % 60
-                print(f"time = {mins} min {secs} sec")
-                print(f"iou = {iou_test_total}")
-                print(f"reward_test = {reward_test_total}")
-                env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
-                iou_all_average += iou_test_total
-                iou_all_min = min(iou_min,iou_all_min)
-                save_path = "plots/"
-                plt.savefig(save_path+"SAC_Plan"+str(plan_choose)+'_summary.png')
-
-            iou_all_average = iou_all_average/10
-            print('iou_all_average',iou_all_average)
-            print('iou_all_min',iou_all_min)
-            '''
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
         
-            ########################1d static test################################
-            plan = self.environment.plan_choose
+            # ########################1d static test################################
+            # plan = self.environment.plan_choose
 
-            print(f"Testing plan {plan}")
+            # print(f"Testing plan {plan}")
 
-            N_iteration_test = 1
-            best_iou = 0
-            iou_test_total = 0
-            iou_min = 1
-            reward_test_total = 0
-            start_time_test = time.time()
+            # N_iteration_test = 1
+            # best_iou = 0
+            # iou_test_total = 0
+            # iou_min = 1
+            # reward_test_total = 0
+            # start_time_test = time.time()
 
-            fig = plt.figure(figsize=(5, 5))
-            ax = fig.add_subplot(1, 1, 1)
-            for ep in range(N_iteration_test):
-                obs = self.environment.reset()
-                reward_test = 0
+            # fig = plt.figure(figsize=(5, 5))
+            # ax = fig.add_subplot(1, 1, 1)
+            # for ep in range(N_iteration_test):
+            #     obs = self.environment.reset()
+            #     reward_test = 0
 
-                while True:
-                    self.action = self.pick_action(eval_ep)
-                    self.conduct_action(self.action)
-                    self.state = self.next_state
-                    obs, r, done = self.environment.step(self.action)
-                    reward_test += r
-                    if done:
-                        break
-                # self.environment.render(ax)
-                # plt.show()
-                iou_test = self.environment.iou()
-                iou_min = min(iou_min, iou_test)
+            #     while True:
+            #         self.action = self.pick_action(eval_ep)
+            #         self.conduct_action(self.action)
+            #         self.state = self.next_state
+            #         reward_test += self.reward
+            #         if done:
+            #             break
+            #     # self.environment.render(ax)
+            #     # plt.show()
+            #     iou_test = self.environment.iou()
+            #     iou_min = min(iou_min, iou_test)
 
-                if iou_test > best_iou:
-                    best_iou = iou_test
-                    best_plan = self.environment.plan
-                    best_tb = self.environment.total_brick
-                    self.environment.render(ax)
-                    save_path = self.config.save_model_path
-                    plt.savefig(save_path+"SAC_Plan"+str(plan)+'_good.png')
-                iou_test_total += iou_test
-                reward_test_total += reward_test
+            #     if iou_test > best_iou:
+            #         best_iou = iou_test
+            #         best_plan = self.environment.plan
+            #         best_tb = self.environment.total_brick
+            #         self.environment.render(ax)
+            #         save_path = self.config.save_model_path
+            #         plt.savefig(save_path+"SAC_Plan"+str(plan)+'_good.png')
+            #     iou_test_total += iou_test
+            #     reward_test_total += reward_test
 
-            reward_test_total = reward_test_total / N_iteration_test
-            iou_test_total = iou_test_total / N_iteration_test
-            secs = int(time.time() - start_time_test)
-            mins = secs // 60
-            secs = secs % 60
-            print(f"time = {mins} min {secs} sec")
-            print(f"iou = {iou_test_total}")
-            print(f"reward_test = {reward_test_total}")
+            # reward_test_total = reward_test_total / N_iteration_test
+            # iou_test_total = iou_test_total / N_iteration_test
+            # secs = int(time.time() - start_time_test)
+            # mins = secs // 60
+            # secs = secs % 60
+            # print(f"time = {mins} min {secs} sec")
+            # print(f"iou = {iou_test_total}")
+            # print(f"reward_test = {reward_test_total}")
     
-            self.environment.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
+            # self.environment.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test)
 
-            save_path = self.config.save_model_path
-            plt.savefig(save_path+"SAC_Plan"+str(plan)+'_summary.png')
+            # save_path = self.config.save_model_path
+            # plt.savefig(save_path+"SAC_Plan"+str(plan)+'_summary.png')
         
 
 
@@ -738,8 +704,6 @@ class SAC(Base_Agent):
          2) Using the actor in evaluation mode if eval_ep is True  3) Using the actor in training mode if eval_ep is False.
          The difference between evaluation and training mode is that training mode does more exploration"""
         if state is None: state = self.state
-        # print(self.state)
-    
         if eval_ep: action = self.actor_pick_action(state=state, eval=True)
         elif self.global_step_number < self.hyperparameters["min_steps_before_learning"]:
             # print('pick_action')

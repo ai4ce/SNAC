@@ -10,38 +10,53 @@ import time
 from collections import deque
 import statistics
 import sys
-pth_plan = ['1596', '1841']
-sys.path.append('../../../Env/2D/')
-sys.path.append('../utils')
-from DMP_ENV_2D_dynamic_MCTS_test import deep_mobile_printing_2d1r
+sys.path.append('../utils/')
 import uct_dynamic_inputplan
-save_path = "./plot/Dynamic/"
-load_path = "./log/dynamic/"
-if os.path.exists(save_path) == False:
-    os.makedirs(save_path)
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+sys.path.append('../../../Env/2D/')
+from DMP_ENV_2D_dynamic_MCTS import deep_mobile_printing_2d1r
+import argparse
 
-print('2D_Static')
+def main(args):
+    def set_seed(seeds):
+        torch.manual_seed(seeds)
+        torch.cuda.manual_seed_all(seeds)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        np.random.seed(seeds)
+        random.seed(seeds)
+        os.environ['PYTHONHASHSEED'] = str(seeds)
 
-iou_all_average = 0
-iou_all_min = 1
+    save_path = "./log/plot/2d_MCTS_DQN_Dynamic/"
+    load_path = "./log/dynamic/"
+    if os.path.exists(save_path) == False:
+        os.makedirs(save_path, exist_ok = True)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-iou_his=[]
-for test_set in range(10):
-    plan_choose=1 ## 0:densetriangle 1:sparsetriangle
-    env = deep_mobile_printing_2d1r(plan_choose=plan_choose, test_set=test_set)
+    print('2D_Static')
+
+    iou_all_average = 0
+    iou_all_min = 1
+
+    iou_his=[]
+    plans = ["dense", "sparse"]
+    plan_choose=args.plan_choice ## 0:densetriangle 1:sparsetriangle
+    PLAN_NAME = plans[plan_choose]
+    env = deep_mobile_printing_2d1r(data_path="../../../Env/2D/data_2d_dynamic_"+PLAN_NAME+"_envplan_500_test.pkl")
     ######################
     # hyper parameter
     minibatch_size = 2000
-    Lr = 0.0001
+    Lr = args.lr
+    seed = args.seed
+    set_seed(seed)
     N_iteration = 3000
-    N_iteration_test = 200
+    N_iteration_test = 500
     ROLLOUT=20
     UCB_CONSTANT=0.5
     alpha = 0.9
     Replay_memory_size = 50000
     Update_traget_period = 200
     UPDATE_FREQ = 1
+    pth_plan = args.pth_plan
 
     Action_dim = env.action_dim
     State_dim = env.state_dim
@@ -52,34 +67,32 @@ for test_set in range(10):
     print("State_dim:",State_dim)
     print("total_step:",env.total_step)
     print("Action_dim",Action_dim)
-
-
+    
+    OUT_FILE_NAME="DQN_MCTS_2d_"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)+"_seed_"+str(seed)
 
     def iou(environment_memory,environment_plan,HALF_WINDOW_SIZE,plan_height,plan_width):
         component1=environment_plan[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
-                           HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
+                        HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
         component2=environment_memory[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
-                           HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
+                        HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
         overlap = component1*component2 # Logical AND
         union = component1 + component2 # Logical OR
         IOU = overlap.sum()/float(union.sum())
         return IOU
 
-
     def get_and_init_FC_layer(din, dout):
         li = nn.Linear(din, dout)
         nn.init.xavier_uniform_(
-           li.weight.data, gain=nn.init.calculate_gain('relu'))
+        li.weight.data, gain=nn.init.calculate_gain('relu'))
         li.bias.data.fill_(0.)
         return li
-
 
     class Q_NET(nn.Module):
         def __init__(self, ):
             super(Q_NET, self).__init__()
 
             self.conv_layer1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3,
-                                         stride=2)  # potential check - in_channels
+                                        stride=2)  # potential check - in_channels
             self.conv_layer2 = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=3, stride=2)
             self.conv_layer3 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=2)
             self.conv_layer4 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=2)
@@ -108,6 +121,7 @@ for test_set in range(10):
             x = self.relu(x)
             Q = self.out(x)
             return Q
+
     UCT_mcts = uct_dynamic_inputplan.UCT(
     action_space=env.action_space,
     rollouts=ROLLOUT,
@@ -115,7 +129,6 @@ for test_set in range(10):
     ucb_constant=UCB_CONSTANT,
     is_model_dynamic=True
     )
-
 
     class DQN_AGNET():
         def __init__(self,device):
@@ -153,9 +166,7 @@ for test_set in range(10):
                 next_states.append(b[3])
                 env_plans.append(b[4])           
             current_states = np.array(current_states)
-            # print("current_states_shape",current_states.shape)
             acts = np.array(acts).reshape(minibatch_size,1)
-            # print("action_shape",acts.shape)
             rewards = np.array(rewards).reshape(minibatch_size,1)
             next_states = np.array(next_states)
             env_plans = np.array(env_plans)       
@@ -180,12 +191,9 @@ for test_set in range(10):
             train_loss=loss.item()
             return train_loss
 
-    PLAN_LIST=["densetriangle","sparsetriangle"]
-    PLAN_NAME=PLAN_LIST[plan_choose]
-    OUT_FILE_NAME="DQN_2d_"+PLAN_NAME+"_lr"+str(Lr)+"_rollouts"+str(ROLLOUT)+"_ucb_constant"+str(UCB_CONSTANT)
     test_agent=DQN_AGNET(device)
     log_path = load_path + OUT_FILE_NAME + "/" + "Eval_net_episode_"
-    test_agent.Eval_net.load_state_dict(torch.load(log_path + pth_plan[plan_choose]+".pth" ,map_location=device))
+    test_agent.Eval_net.load_state_dict(torch.load(log_path + str(pth_plan)+".pth" ,map_location=device))
     best_iou=-100
     best_env = np.array([])
     iou_test_total=0
@@ -232,32 +240,30 @@ for test_set in range(10):
     iou_all_average += iou_test_total
     iou_all_min = min(iou_min,iou_all_min)
 
-
     print("total_brick:", env.total_brick)
     print('iou_his:',iou_history)
     print('iou_min:',min(iou_history))
-    # env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
-    # plt.savefig(save_path + "Plan" + str(plan_choose) +'_test'+str(test_set) + '.png')
+    env.render(ax,iou_average=iou_test_total,iou_min=iou_min,iter_times=N_iteration_test,best_env=best_env,best_iou=best_iou,best_step=best_step,best_brick=best_brick)
 
+    info_file = save_path+"Plan"+str(plan_choose)+"_Seed"+str(seed)+"_lr"+str(Lr)
+    plt.savefig(info_file+".png")
+    with open(info_file + ".pkl",'wb') as f:
+        pickle.dump(iou_history, f)
 
-        # while True:
-        #     state = state.reshape(state.shape[-1])
-        #     action = test_agent.choose_action(state, env_plan)
-        #     state_next, r, done = env.step(action)
-        #     state_next = state_next.reshape(state_next.shape[-1])
-        #     # env.render(ax,iou_min,iou_test_total,N_iteration_test)
-        #     # plt.pause(0.1)
-        #     total_reward+=r
-        #     if done:
-        #         env.render(ax, iou_min, iou_test_total, N_iteration_test)
-        #         plt.savefig(save_path + "Plan" + str(plan_choose) +'_test'+str(test_set) + '.png')
-        #         break
-        #     state = state_next
+    iou_all_average = iou_all_average/20
+    print('#### Finish #####')
+    print('iou_all_average',iou_all_average)
+    print('iou_all_min',iou_all_min)
+    std = statistics.pstdev(iou_his)
+    print("iou std",std)
 
-iou_all_average = iou_all_average/20
-print('#### Finish #####')
-print('iou_all_average',iou_all_average)
-print('iou_all_min',iou_all_min)
-std = statistics.pstdev(iou_his)
-print("iou std",std)
-# plt.show()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--plan-choice', default=0, type=int, help='static has: sin 0, gaussian 1, step 2')
+    parser.add_argument('--seed', default=1, type=int, help='random seed from 1-4')
+    parser.add_argument('--lr', default=0.00005, type=float, help='learning rate')
+    parser.add_argument('--pth-plan', default=1, type=int, help='learning rate')
+    
+    args = parser.parse_args()
+    print(args)
+    main(args)

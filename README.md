@@ -1,15 +1,33 @@
-# Simultaneous Navigation and Construction Benchmarking Environments
+# Learning Simultaneous Navigation and Construction in Grid Worlds
 
-[**Wenyu Han**](https://github.com/WenyuHan-LiNa), [**Chen Feng**](https://engineering.nyu.edu/faculty/chen-feng), [**Haoran Wu**](https://www.linkedin.com/in/haoran-lucas-ng-4053471a0/), [**Alexander Gao**](https://www.alexandergao.com/), [**Armand Jordana**](https://wp.nyu.edu/machinesinmotion/people/), [**Dong Liu**](http://mechatronics.engineering.nyu.edu/people/phd-candidates/dongdong-liu.php), [**Lerrel Pinto**](https://www.lerrelpinto.com/), [**Ludovic Righetti**](https://wp.nyu.edu/machinesinmotion/89-2/)
+[**Wenyu Han**](https://www.linkedin.com/in/wenyuhan0616), [**Haoran Wu**](https://www.linkedin.com/in/haoran-lucas-ng-4053471a0/), [**Eisuke Hirota**](https://www.linkedin.com/in/eisukeh/), [**Alexander Gao**](https://www.alexandergao.com/), [**Lerrel Pinto**](https://www.lerrelpinto.com/), [**Ludovic Righetti**](https://wp.nyu.edu/machinesinmotion/89-2/), [**Chen Feng**](https://engineering.nyu.edu/faculty/chen-feng), 
 
 ## Abstract
-We need intelligent robots for mobile construction, the process of navigating in an environment and modifying its structure according to a geometric design. In this task, a major robot vision and learning challenge is how to exactly achieve the design without GPS, due to the difficulty caused bythe bi-directional coupling of accurate robot localization and navigation together with strategic environment manipulation. However, many existing robot vision and learning tasks such as visual navigation and robot manipulation address only one of these two coupled aspects. To stimulate the pursuit of a generic and adaptive solution, we reasonably simplify mobile construction as a partially observable Markov decision process (POMDP) in 1/2/3D grid worlds and benchmark the performance of a handcrafted policy with basic localization and planning, and state-of-the-art deep reinforcement learning (RL) methods. Our extensive experiments show that the coupling makes this problem very challenging for those methods, and emphasize the need for novel task-specific solutions.
+We propose to study a new learning task, mobile construction, to enable an agent to build designed structures in 1/2/3D grid worlds while navigating in the same evolving environments. Unlike existing robot learning tasks such as visual navigation and object manipulation, this task is challenging because of the interdependence between accurate localization and strategic construction planning. In pursuit of generic and adaptive solutions to this partially observable Markov decision process (POMDP) based on deep reinforcement learning (RL), we design a Deep Recurrent Q-Network (DRQN) with explicit recurrent position estimation in this dynamic grid world. Our extensive experiments show that pre-training this position estimation module before Q-learning can significantly improve the construction performance measured by the intersection-over-union score, achieving the best results in our benchmark of various baselines including model-free and model-based RL, a handcrafted SLAM-based policy, and human players.
 
-## [Code (GitHub)](https://github.com/ai4ce/SNAC) & Dependencies
-All environment scripts can be found in [Env](https://github.com/ai4ce/SNAC/tree/main/Env) folder. These environments are developed based on the [OpenAi Gym](https://gym.openai.com/). All baseline scripts are in [script](https://github.com/ai4ce/SNAC/tree/main/script) floder. You need to install the [Pytorch](https://pytorch.org/) to run all baseline scripts. We use [Stable baseline](https://github.com/openai/baselines/) for PPO algorithm. 
+# Installation
+
+We recommend user to create a virtual environment for running this project. We list details of the environment setup process as follows:
+
+## Create and activate new conda env.
+
+```
+conda create -n my-conda-env python=3.7
+conda activate my-conda-env
+```
+
+## Note: pytorch is needed, so you need to install it based on your own system conditions. Here we use Linux and CUDA version 11.7 as an example.
+
+```pip3 install torch torchvision torchaudio```
+
+## Next, install other dependencies listed in requirement.txt
+
+```pip install -r requirements.txt```
+
 ## How to use
 
 Our environment is developed based on the [OpenAi Gym](https://gym.openai.com/). You can simply follow the similar way to use our environment. Here we present an example for using 1D static task environment.
+
 ```
 from DMP_Env_1D_static import deep_mobile_printing_1d1r ### you may need to find the path to this environment in [Env] folder 
 env = deep_mobile_printing_1d1r(plan_choose=2) ### plan_choose could be 0: sin, 1: Gaussian, and 2: Step curve  
@@ -27,16 +45,34 @@ for _ in range(1000):
 plt.show()
 ```
 
-## [Paper (arXiv)](https://arxiv.org/abs/2103.16732)
+# Reproduce experiment results
+
+All scripts for each method are in script/ folder where subfolder contains policies for 1D, 2D, and 3D tasks. You can find all hyperparameters used for each case in the config/ folder which has the same structure as script/ folder. The scripts for simulation environments are in Env/ folder. You can easily reproduce the experiments by running the algorithm scripts with its corresponding hyperparameters in the YML files. For example, if I want to train the DQN policy on 2D variable dense task:
+
+```
+cd script/DQN/2d/
+python DQN_2d_dynamic.py ../../../config/DQN/2D/dynamic_dense.yml
+```
+
+# Multiprocess
+
+We also provide a multiprocess script for batch simulation. 
+
+```
+python multiprocess.py --env 1DStatic --plan_type 0 --num_envs 5
+```
+
+## [Paper (OpenReview)](https://openreview.net/forum?id=NEtep2C7yD)
 To cite our paper:
 ```
-@misc{han2021simultaneous,
-      title={Simultaneous Navigation and Construction Benchmarking Environments}, 
-      author={Wenyu Han and Chen Feng and Haoran Wu and Alexander Gao and Armand Jordana and Dong Liu and Lerrel Pinto and Ludovic Righetti},
-      year={2021},
-      eprint={2103.16732},
-      archivePrefix={arXiv},
-      primaryClass={cs.RO}
+@inproceedings{
+    anonymous2023learning,
+    title={Learning Simultaneous Navigation and Construction in Grid Worlds},
+    author={Anonymous},
+    booktitle={Submitted to The Eleventh International Conference on Learning Representations },
+    year={2023},
+    url={https://openreview.net/forum?id=NEtep2C7yD},
+    note={under review}
 }
 ```
 

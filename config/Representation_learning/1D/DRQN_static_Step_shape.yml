@@ -1,0 +1,11 @@
+device: "cuda"
+model_dir: "./model_dir_DRQN_Lnet_1d_static"
+log_dir: "./log_dir_DRQN_Lnet_1d_static"
+lr: 0.000005
+batch_size: 64
+plan_type: 2 ##0: sin 1: Guassian 2:step
+Random_seed: 1
+Replay_buffer_size: 1000
+N_iteration: 10000
+update_traget_period: 200
+pretrainmodel: model_static_step_00625000.pth

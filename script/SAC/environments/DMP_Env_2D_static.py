@@ -2,11 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import gym
 import matplotlib.patches as patches
-from gym import spaces
-from skimage import draw
-from matplotlib.path import Path
-import math
-import matplotlib
 
 class deep_mobile_printing_2d1r(gym.Env):
     def __init__(self,plan_choose=0):

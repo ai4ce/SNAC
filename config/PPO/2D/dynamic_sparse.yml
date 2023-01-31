@@ -1,0 +1,12 @@
+Random_seed: 1
+model_dir: "./model_dir_PPO_2d_dynamic"
+log_dir: "./log_dir_PPO_2d_dynamic"
+plan_type: 1  ##0: dense 1: sparse
+gamma: 0.99
+n_steps: 100000
+ent_coef: 0.01
+learning_rate: 0.00025
+vf_coef: 0.5
+cliprange: 0.1
+nminibatches: 100
+noptepochs: 4

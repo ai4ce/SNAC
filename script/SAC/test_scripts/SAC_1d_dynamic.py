@@ -1,9 +1,6 @@
-import os
 import sys
 from os.path import dirname, abspath
 sys.path.append(dirname(dirname(abspath(__file__))))
-
-import gym
 from agents.actor_critic_agents.SAC_Discrete import SAC_Discrete
 from agents.Trainer import Trainer
 from utilities.data_structures.Config import Config
@@ -16,7 +13,7 @@ config.seed = 1
 # 1: gaussian
 # 2: step
 
-config.environment = deep_mobile_printing_1d1r()
+config.environment = deep_mobile_printing_1d1r(data_path="../../../Env/1D/data_1d_dynamic_sin_envplan_500_test.pkl")
 
 config.num_episodes_to_run = 10000
 config.file_to_save_data_results = "results/data_and_graphs/Cart_Pole_Results_Data.pkl"

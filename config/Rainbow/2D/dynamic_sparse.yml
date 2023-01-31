@@ -1,0 +1,6 @@
+device: "cuda"
+lr: .0001
+plan_type: 1 ##1: sparse
+Random_seed: 1
+env: "2DDynamic"
+half_window_size: 3

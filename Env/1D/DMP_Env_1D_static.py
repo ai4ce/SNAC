@@ -1,12 +1,7 @@
 import numpy as np
 import math
-import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import gym
-import torch
-from gym import spaces
-
 
 class deep_mobile_printing_1d1r(gym.Env):
     def __init__(self, plan_choose=0):

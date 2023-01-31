@@ -1,9 +1,6 @@
-import os
 import sys
 from os.path import dirname, abspath
 sys.path.append(dirname(dirname(abspath(__file__))))
-
-import gym
 from agents.actor_critic_agents.SAC_Discrete import SAC_Discrete
 from agents.Trainer import Trainer
 from utilities.data_structures.Config import Config
@@ -11,13 +8,7 @@ from environments.DMP_Env_2D_static import deep_mobile_printing_2d1r
 
 config = Config()
 config.seed = 1
-
-# 0: sin
-# 1: gaussian
-# 2: step
-
 config.environment = deep_mobile_printing_2d1r(plan_choose=0)
-
 config.num_episodes_to_run = 5000
 config.file_to_save_data_results = "results/data_and_graphs/Cart_Pole_Results_Data.pkl"
 config.file_to_save_results_graph = "results/data_and_graphs/Cart_Pole_Results_Graph.png"
@@ -31,11 +22,8 @@ config.overwrite_existing_results_file = True
 config.randomise_random_seed = False
 config.save_model = False
 
-
 config.hyperparameters = {
-
     "Actor_Critic_Agents":  {
-
         "learning_rate": 0.005,
         "linear_hidden_units": [64, 64],
         "final_layer_activation": ["SOFTMAX", None],
@@ -45,7 +33,6 @@ config.hyperparameters = {
         "normalise_rewards": True,
         "exploration_worker_difference": 1.5,
         "clip_rewards": True,
-
         "Actor": {
             "learning_rate": 0.0003,
             "linear_hidden_units": [64, 128,64],
@@ -55,7 +42,6 @@ config.hyperparameters = {
             "gradient_clipping_norm": 10,
             "initialiser": "Xavier"
         },
-
         "Critic": {
             "learning_rate": 0.0003,
             "linear_hidden_units": [64, 128,64],
@@ -66,7 +52,6 @@ config.hyperparameters = {
             "gradient_clipping_norm": 10,
             "initialiser": "Xavier"
         },
-
         "min_steps_before_learning": 400,
         "batch_size": 128,
         "discount_rate": 0.99,
@@ -83,11 +68,8 @@ config.hyperparameters = {
         "do_evaluation_iterations": True
     }
 }
-
 if __name__ == "__main__":
-
     # turn it on if you want to test specific network saved
-
     test = True
     dictPath = 'results/data_and_graphs/Actor_net_episode_741.pth'
     AGENTS = [SAC_Discrete]

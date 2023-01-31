@@ -12,24 +12,18 @@ import matplotlib.animation as animation
 import time
 import os
 from collections import deque
-
 pth_plan =  ['3310', '2561', '3172']
-
 sys.path.append('1D/Static/')
 from DMP_Env_1D_static_test import deep_mobile_printing_1d1r
-
 save_path = "./log/DRQN/plot/1D/Static/"
 load_path = "./log/DRQN/1D/Static/plan_"
 if os.path.exists(save_path) == False:
     os.makedirs(save_path)
 device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
-
 print('1D_Static')
-
 iou_all_average = 0
 iou_all_min = 1
 for plan_choose in range(3):
-
     env = deep_mobile_printing_1d1r(plan_choose=plan_choose)
     ######################
     # hyper parameter
@@ -53,18 +47,14 @@ for plan_choose in range(3):
     print("Total Brick: ", env.total_brick)
     print("plan_width", PLAN_DIM)
     print('######################')
-
-
     def get_and_init_FC_layer(din, dout):
         li = nn.Linear(din, dout)
         li.weight.data.normal_(0, 0.1)
         return li
 
-
     class Q_NET(nn.Module):
         def __init__(self, out_size, hidden_size):
             super(Q_NET, self).__init__()
-
             self.out_size = out_size
             self.hidden_size = hidden_size
             self.fc_1 = get_and_init_FC_layer(State_dim, 64)
@@ -74,7 +64,6 @@ for plan_choose in range(3):
             self.adv = get_and_init_FC_layer(hidden_size, self.out_size)
             self.val = get_and_init_FC_layer(hidden_size, 1)
             self.relu = nn.ReLU()
-
         def forward(self, x, bsize, time_step, hidden_state, cell_state):
             x = x.view(bsize * time_step, State_dim)
             x = self.fc_1(x)
@@ -93,22 +82,17 @@ for plan_choose in range(3):
             qout = val_out.expand(bsize, self.out_size) + (
                     adv_out - adv_out.mean(dim=1).unsqueeze(dim=1).expand(bsize, self.out_size))
             return qout, (h_n, c_n)
-
         def init_hidden_states(self, bsize):
             h = torch.zeros(1, bsize, self.hidden_size).float().to(device)
             c = torch.zeros(1, bsize, self.hidden_size).float().to(device)
             return h, c
 
-
     class Memory():
-
         def __init__(self, memsize):
             self.memsize = memsize
             self.memory = deque(maxlen=self.memsize)
-
         def add_episode(self, epsiode):
             self.memory.append(epsiode)
-
         def get_batch(self, bsize, time_step):
             sampled_epsiodes = random.sample(self.memory, bsize)
             batch = []
@@ -116,7 +100,6 @@ for plan_choose in range(3):
                 point = np.random.randint(0, len(episode) + 1 - time_step)
                 batch.append(episode[point:point + time_step])
             return batch
-
 
     class DQN_AGNET():
         def __init__(self, device):
@@ -131,9 +114,7 @@ for plan_choose in range(3):
             self.loss_his = []
             self.greedy_epsilon = 0.2
             self.replaymemory = Memory(Replay_memory_size)
-
         def choose_action(self, s, hidden_state, cell_state):
-
             state = torch.from_numpy(s).float().to(self.device)
             model_out = self.Eval_net.forward(state, bsize=1, time_step=1, hidden_state=hidden_state,
                                               cell_state=cell_state)
@@ -141,64 +122,10 @@ for plan_choose in range(3):
             action = int(torch.argmax(out[0]))
             hidden_state = model_out[1][0]
             cell_state = model_out[1][1]
-
             return action, hidden_state, cell_state
-
-        def learning_process(self):
-            self.optimizer.zero_grad()
-            self.Eval_net.train()
-            if self.learn_step % Update_traget_period == 0:
-                self.Target_net.load_state_dict(self.Eval_net.state_dict())
-
-            hidden_batch, cell_batch = self.Eval_net.init_hidden_states(bsize=minibatch_size)
-            batch = self.replaymemory.get_batch(bsize=minibatch_size, time_step=Time_step)
-
-            current_states = []
-            acts = []
-            rewards = []
-            next_states = []
-            for b in batch:
-                cs, ac, rw, ns = [], [], [], []
-                for element in b:
-                    cs.append(element[0])
-                    ac.append(element[1])
-                    rw.append(element[2])
-                    ns.append(element[3])
-                current_states.append(cs)
-                acts.append(ac)
-                rewards.append(rw)
-                next_states.append(ns)
-            current_states = np.array(current_states)
-            acts = np.array(acts)
-            rewards = np.array(rewards)
-            next_states = np.array(next_states)
-
-            torch_current_states = torch.from_numpy(current_states).float().to(self.device)
-            torch_acts = torch.from_numpy(acts).long().to(self.device)
-            torch_rewards = torch.from_numpy(rewards).float().to(self.device)
-            torch_next_states = torch.from_numpy(next_states).float().to(self.device)
-
-            Q_s, _ = self.Eval_net.forward(torch_current_states, bsize=minibatch_size, time_step=Time_step,
-                                           hidden_state=hidden_batch, cell_state=cell_batch)
-
-            Q_s_a = Q_s.gather(dim=1, index=torch_acts[:, Time_step - 1].unsqueeze(dim=1)).squeeze(dim=1)
-
-            Q_next, _ = self.Target_net.forward(torch_next_states, bsize=minibatch_size, time_step=Time_step,
-                                                hidden_state=hidden_batch, cell_state=cell_batch)
-            Q_next_max, __ = Q_next.detach().max(dim=1)
-            target_values = torch_rewards[:, Time_step - 1] + (alpha * Q_next_max)
-
-            loss = self.loss(Q_s_a, target_values)
-
-            loss.backward()
-            self.optimizer.step()
-            self.learn_step += 1
-            self.loss_his.append(loss.item())
-
 
     test_agent = DQN_AGNET(device)
     log_path = load_path + str(plan_choose) + "/" + "Eval_net_episode_"
-
     test_agent.Eval_net.load_state_dict(torch.load(log_path + pth_plan[plan_choose] + ".pth", map_location='cpu'))
     test_agent.greedy_epsilon = 0.08
     best_iou = 0
@@ -214,7 +141,6 @@ for plan_choose in range(3):
         state = env.reset()
         reward_test = 0
         hidden_state, cell_state = test_agent.Eval_net.init_hidden_states(bsize=1)
-
         while True:
             action, hidden_state_next, cell_state_next = test_agent.choose_action(state, hidden_state, cell_state)
             state_next, r, done = env.step(action)
@@ -225,7 +151,6 @@ for plan_choose in range(3):
             hidden_state, cell_state = hidden_state_next, cell_state_next
         iou_test = env.iou()
         iou_min = min(iou_min, iou_test)
-
         if iou_test > best_iou:
             best_iou = iou_test
             best_plan = env.plan
@@ -235,7 +160,6 @@ for plan_choose in range(3):
             best_env = env.environment_memory
         iou_test_total += iou_test
         reward_test_total += reward_test
-
     reward_test_total = reward_test_total / N_iteration_test
     iou_test_total = iou_test_total / N_iteration_test
     secs = int(time.time() - start_time_test)
@@ -245,7 +169,6 @@ for plan_choose in range(3):
     iou_all_average += iou_test_total
     iou_all_min = min(iou_min,iou_all_min)
     plt.savefig(save_path+"Plan"+str(plan_choose)+'.png')
-
 iou_all_average = iou_all_average/3
 print('iou_all_average',iou_all_average)
 print('iou_all_min',iou_all_min)

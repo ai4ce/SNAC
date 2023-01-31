@@ -3,9 +3,7 @@ from torch.optim import Optimizer
 
 
 class DM_RMSprop(Optimizer):
-    """Implements the form of RMSProp used in DM 2015 Atari paper.
-    Inspired by https://github.com/spragunr/deep_q_rl/blob/master/deep_q_rl/updates.py"""
-
+    
     def __init__(self, params, lr=1e-2, alpha=0.99, eps=1e-8, weight_decay=0, momentum=0, centered=False):
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))

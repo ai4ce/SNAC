@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import gym
-import cv2
+import joblib
 
 class deep_mobile_printing_2d1r(gym.Env):
-    def __init__(self, plan_choose=0):
+    def __init__(self, data_path, random_choose_paln=True):
         # plan_choose: 0 Dense triangle, 1 Sparse triangle
-
+        # test_set from 0 to 9
         self.step_size = 1
         self.plan_width = 20
         self.plan_height = 20
@@ -26,38 +26,25 @@ class deep_mobile_printing_2d1r(gym.Env):
         self.one_hot = None
         self.action_dim = 5
         self.state_dim = (2 * self.HALF_WINDOW_SIZE + 1) ** 2 + 2
-        self.plan_choose = plan_choose
-
-
-    def create_plan(self):
-        if not(self.plan_choose == 1 or self.plan_choose == 0 ):
-            raise ValueError(' 0: Dense triangle, 1: Sparse triangle')
-
-        plan = np.zeros((self.environment_height, self.environment_width))
-        area = [50,20]
-        total_area = 0
-        while total_area <= area[self.plan_choose]:
-            x = np.random.randint(0, self.plan_width, size=3)
-            y = np.random.randint(0, self.plan_height, size=3)
-
-            img_rgb = np.ones((self.plan_height, self.plan_width, 3), np.uint8) * 255
-            vertices = np.array([[x[0], y[0]], [x[1], y[1]], [x[2], y[2]]], np.int32)
-            pts = vertices.reshape((-1, 1, 2))
-            cv2.polylines(img_rgb, [pts], isClosed=True, color=(0, 0, 0))
-            if self.plan_choose == 1:
-                cv2.fillPoly(img_rgb, [pts], color=(0, 0, 0))
-
-            plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height,
-            self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width] = 1 - img_rgb[:, :, 0] / 255
-            total_area = sum(sum(plan))
-
-        return plan, total_area
+        self.plan_dataset = joblib.load(data_path)
+        self.plan_dataset_len = len(self.plan_dataset)
+        self.random_choose_paln = random_choose_paln
+        self.index_for_non_random = 0
 
     def reset(self):
-        self.plan, self.total_brick = self.create_plan()
+        if self.random_choose_paln:
+            self.index_random = np.random.randint(0, self.plan_dataset_len)
+            self.plan = self.plan_dataset[self.index_random]
+            self.total_brick = sum(sum(self.plan))
+        else:
+            self.plan = self.plan_dataset[self.index_for_non_random]
+            self.total_brick = sum(sum(self.plan))
+            self.index_for_non_random += 1
+            if self.index_for_non_random == self.plan_dataset_len:
+                self.index_for_non_random = 0
         if self.total_brick < 30:
             self.total_brick = 30
-        self.input_plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
+        self.input_plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height,
                           self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
         self.environment_memory = np.zeros((self.environment_height, self.environment_width))
         self.environment_memory[:, :self.HALF_WINDOW_SIZE] = -1
@@ -74,7 +61,11 @@ class deep_mobile_printing_2d1r(gym.Env):
 
         self.position_memory.append(initial_position)
         #
-        return np.hstack((self.observation_(initial_position), np.array([[self.count_brick]]), np.array([[self.count_step]])))[0]
+        # return [np.hstack(
+        #     (self.observation_(initial_position), np.array([[self.count_brick]]), np.array([[self.count_step]]))),
+        #     self.input_plan, initial_position]
+        return np.hstack((self.observation_(initial_position).flatten(), np.array([[self.count_brick]]).flatten(), 
+            np.array([[self.count_step]]).flatten(), np.array([self.input_plan]).flatten()))
 
     def observation_(self, position):
         observation = self.environment_memory[
@@ -97,7 +88,7 @@ class deep_mobile_printing_2d1r(gym.Env):
         self.count_step += 1
         self.step_size = np.random.randint(1, 4)
 
-        ### 0 left, 1 right, 2 up, 3 down 
+        # 0 left, 1 right, 2 up, 3 down
         if action == 0:
             position = [self.position_memory[-1][0], self.position_memory[-1][1] - self.step_size]
             position = self.clip_position(position)
@@ -117,7 +108,7 @@ class deep_mobile_printing_2d1r(gym.Env):
             position = self.clip_position(position)
             self.position_memory.append(position)
 
-        #######    4   drop
+        # 4 drop
         if action == 4:
             self.count_brick += 1
             position = self.position_memory[-1]
@@ -125,15 +116,19 @@ class deep_mobile_printing_2d1r(gym.Env):
 
             self.environment_memory[position[0], position[1]] += 1.0
 
-            done = bool(self.count_brick > self.total_brick)
+            done = bool(self.count_brick >= self.total_brick)
             if done:
                 if self.environment_memory[position[0], position[1]] > 1:
                     self.environment_memory[position[0], position[1]] = 1.0
 
-                observation = [np.hstack(
-                    (self.observation_(position), np.array([[self.count_brick]]), np.array([[self.count_step]]))),self.input_plan]
+                # observation = [np.hstack(
+                #     (self.observation_(position), np.array([[self.count_brick]]), np.array([[self.count_step]]))),
+                #     self.input_plan, position]
+                observation = np.hstack((self.observation_(position).flatten(), np.array([[self.count_brick]]).flatten(),
+                    np.array([[self.count_step]]).flatten(), np.array([self.input_plan]).flatten()))
+
                 reward = 0.0
-                return observation[0][0], reward, done
+                return observation, reward, done
             else:
                 done = bool(self.count_step >= self.total_step)
                 if self.environment_memory[position[0], position[1]] > self.plan[position[0], position[1]]:
@@ -143,58 +138,73 @@ class deep_mobile_printing_2d1r(gym.Env):
                     reward = 5.0
                 if self.environment_memory[position[0], position[1]] > 1.0:
                     self.environment_memory[position[0], position[1]] = 1.0
-                observation = [np.hstack(
-                    (self.observation_(position), np.array([[self.count_brick]]), np.array([[self.count_step]]))),self.input_plan]
-                return observation[0][0], reward, done
+                # observation = [np.hstack(
+                #     (self.observation_(position), np.array([[self.count_brick]]), np.array([[self.count_step]]))),
+                #     self.input_plan, position]
+                observation = np.hstack((self.observation_(position).flatten(), np.array([[self.count_brick]]).flatten(),
+                    np.array([[self.count_step]]).flatten(), np.array([self.input_plan]).flatten()))
+                return observation, reward, done
 
         done = bool(self.count_step >= self.total_step)
-        observation = [np.hstack(
-            (self.observation_(position), np.array([[self.count_brick]]), np.array([[self.count_step]]))),self.input_plan]
+        # observation = [np.hstack(
+        #             (self.observation_(position), np.array([[self.count_brick]]), np.array([[self.count_step]]))),
+        #             self.input_plan, position]
+        observation = np.hstack((self.observation_(position).flatten(), np.array([[self.count_brick]]).flatten(),
+            np.array([[self.count_step]]).flatten(), np.array([self.input_plan]).flatten()))
         reward = 0
 
-        return observation[0][0], reward, done
+        return observation, reward, done
+
+    # def seed(test):
+    #     return test
+
     def iou(self):
-        environment_memory = self.environment_memory
-        environment_plan = self.plan
-        HALF_WINDOW_SIZE = self.HALF_WINDOW_SIZE
-        plan_height = self.plan_height
-        plan_width = self.plan_width
-        component1=environment_plan[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
-                           HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
-        component2=environment_memory[HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_height,\
-                           HALF_WINDOW_SIZE:HALF_WINDOW_SIZE+plan_width].astype(bool)
+        component1=self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE+self.plan_height,\
+                        self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE+self.plan_width].astype(bool)
+        component2=self.environment_memory[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE+self.plan_height,\
+                        self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE+self.plan_width].astype(bool)
         overlap = component1*component2 # Logical AND
-        union = component1 + component2 # Logical OR
+        union = component1 + component2 # Logical OR 
         IOU = overlap.sum()/float(union.sum())
         return IOU
-    def render(self, axe, iou_min=None, iou_average=None, iter_times=100):
+
+    def render(self, axe, iou_min=None, iou_average=None, iter_times=1, best_env=np.array([]), best_iou=None,
+               best_step=0, best_brick=0):
 
         axe.clear()
-        plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
-               self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
-        env_memory = self.environment_memory[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
-                     self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
-        background = np.zeros((self.plan_height, self.plan_width))
-        img = np.stack((env_memory, plan, background), axis=2)
-        plt.imshow(img)
-        plt.plot(self.position_memory[-1][1] - self.HALF_WINDOW_SIZE,
-                 self.position_memory[-1][0] - self.HALF_WINDOW_SIZE, "*")
         ###  compute IOU
         component1 = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
                      self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width].astype(bool)
         component2 = self.environment_memory[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
                      self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width].astype(bool)
-        overlap = component1 * component2  # Logical AND
-        union = component1 + component2  # Logical OR
+        overlap = component1 * component2
+        union = component1 + component2
         IOU = overlap.sum() / float(union.sum())
 
-        # Add the patch to the Axes
+        plan = self.plan[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
+               self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
+        if best_env.any():
+            env_memory = best_env[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
+                         self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
+            IOU = best_iou
+            step = best_step
+            brick = best_brick
+        else:
+            env_memory = self.environment_memory[self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_height, \
+                         self.HALF_WINDOW_SIZE:self.HALF_WINDOW_SIZE + self.plan_width]
+            step = self.count_step
+            brick = self.count_brick
+
+        background = np.zeros((self.plan_height, self.plan_width))
+        img = np.stack((env_memory, plan, background), axis=2)
+        plt.imshow(img)
+        plt.plot(self.position_memory[-1][1] - self.HALF_WINDOW_SIZE,
+                 self.position_memory[-1][0] - self.HALF_WINDOW_SIZE, "*")
         if iou_min == None:
             iou_min = IOU
         if iou_average == None:
             iou_average = IOU
-        # axe.add_patch(rect)
-        axe.title.set_text('step=%d,used_paint=%d,IOU=%.3f' % (self.count_step, self.count_brick, IOU))
+        axe.title.set_text('step=%d,used_paint=%d,IOU=%.3f' % (step, brick, IOU))
         plt.text(0, 21.5, 'Iou_min_iter_%d = %.3f' % (iter_times, iou_min), color='red', fontsize=12)
         plt.text(0, 20.5, 'Iou_average_iter_%d = %.3f' % (iter_times, iou_average), color='blue', fontsize=12)
         axe.axis('off')
@@ -202,15 +212,15 @@ class deep_mobile_printing_2d1r(gym.Env):
         plt.draw()
 
 
-if __name__ == "__main__":
-    env = deep_mobile_printing_2d1r(plan_choose=2)
-
+if __name__ == "__main__":    
+    env = deep_mobile_printing_2d1r(plan_choose=0)
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     total_reward = 0
     env.reset()
     env.render(ax)
     print(env.total_brick)
+    print(env.one_hot)
     while True:
         obs, reward, done = env.step(np.random.randint(5))
         env.render(ax)
@@ -218,6 +228,5 @@ if __name__ == "__main__":
         total_reward += reward
         if done:
             break
-
     print("reward:", total_reward)
     plt.show()

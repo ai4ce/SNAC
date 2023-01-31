@@ -1,17 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jun  9 18:45:57 2021
-
-@author: lelea
-"""
-
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import gym
 from gym import spaces
-
 
 class deep_mobile_printing_1d1r_MCTS(gym.Env):
     def __init__(self, plan_choose=0):
@@ -97,7 +88,7 @@ class deep_mobile_printing_1d1r_MCTS(gym.Env):
         observation = np.hstack((self.environment_memory[:,
                           initial_position - self.HALF_WINDOW_SIZE:initial_position + self.HALF_WINDOW_SIZE + 1],
                           np.array([[self.conut_brick]]), np.array([[self.count_step]])))
-        return observation
+        return self.state, observation
     
     
     def transition(self, state, action, is_model_dynamic=True):
@@ -184,9 +175,7 @@ class deep_mobile_printing_1d1r_MCTS(gym.Env):
                 observation = np.hstack((self.environment_memory[:,
                                          position - self.HALF_WINDOW_SIZE:position + self.HALF_WINDOW_SIZE + 1],
                                          np.array([[self.conut_brick]]), np.array([[self.count_step]])))
-# =============================================================================
-#                 self.state = (position,self.environment_memory,self.conut_brick,self.count_step)
-# =============================================================================
+
                 environment_memory=self.environment_memory.copy()
                 conut_brick=self.conut_brick
                 count_step=self.count_step
@@ -233,17 +222,16 @@ class deep_mobile_printing_1d1r_MCTS(gym.Env):
 
         return self.state, observation, reward, done
     
-    def equality_operator(self, s1, s2):
+    def equality_operator(self, o1, o2):
         
         Equal=True
         
-        if s1[0]!=s2[0]:
-            return False
-        if not np.array_equal(s1[1],s2[1]):
+     
+        if not np.array_equal(o1,o2):
             return False
     
         
-        return True
+        return Equal
 
     def iou(self):
         component1 = self.plan
@@ -259,6 +247,21 @@ class deep_mobile_printing_1d1r_MCTS(gym.Env):
         area_cross = area2 - k
         iou = area_cross / (area1 + area2 - area_cross)
         return iou
+    def iou_MCTS(self,environment_memory):
+        component1 = self.plan
+        component2 = environment_memory[0][self.HALF_WINDOW_SIZE:self.plan_width + self.HALF_WINDOW_SIZE]
+
+        area1 = sum(component1)
+        area2 = sum(component2)
+        k = 0
+        for i in range(self.plan_width):
+            if component2[i] > component1[i]:
+                j = component2[i] - component1[i]
+                k += j
+        area_cross = area2 - k
+        iou = area_cross / (area1 + area2 - area_cross)
+        return iou
+
 
     def render(self, axe, iou_min=None, iou_average=None, iter_times=1, best_env=np.array([]), best_iou=None,
                best_step=0, best_brick=0):
@@ -307,7 +310,7 @@ if __name__ == "__main__":
     ax.clear()
     for i in range(step):
         action = np.random.randint(0, 3, (1,))
-        _, observation, reward, done = env.step(action)
+        state, observation, reward, done = env.step(action)
         env.render(ax)
         env.iou()
         plt.pause(0.1)
