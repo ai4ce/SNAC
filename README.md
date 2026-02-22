@@ -65,14 +65,12 @@ python multiprocess.py --env 1DStatic --plan_type 0 --num_envs 5
 ## [Paper (OpenReview)](https://openreview.net/forum?id=NEtep2C7yD)
 To cite our paper:
 ```
-@inproceedings{
-    anonymous2023learning,
+@inproceedings{han2023learning,
     title={Learning Simultaneous Navigation and Construction in Grid Worlds},
-    author={Anonymous},
-    booktitle={Submitted to The Eleventh International Conference on Learning Representations },
+    author = {Han, Wenyu and Wu, Haoran and Hirota, Eisuke and Gao, Alexander and Pinto, Lerrel and Righetti, Ludovic and Feng, Chen},
+    booktitle={International Conference on Learning Representations (ICLR)},
     year={2023},
-    url={https://openreview.net/forum?id=NEtep2C7yD},
-    note={under review}
+    url={https://openreview.net/forum?id=NEtep2C7yD}
 }
 ```
 
